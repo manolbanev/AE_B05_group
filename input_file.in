@@ -1,14 +1,14 @@
-LOAD boing_106.dat
-boing_106
+LOAD NASA_sc_20412.dat
+NASA_sc_20412
 PANE
 OPER
 Visc 29610844.47
 M 0.67
 PACC
-polar_file_boing_106.txt
+polar_file_NASA_sc_20412.txt
 
 ITER 100
-ASeq 0 3 0.1
+ASeq -3 3 0.1
 
 
 quit
