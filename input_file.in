@@ -1,14 +1,14 @@
-LOAD NASA_sc_20412.dat
-NASA_sc_20412
+LOAD NASA_sc_20414.dat
+NASA_sc_20414
 PANE
 OPER
-Visc 29610844.47
-M 0.67
+Visc 23000000
+M 0.2
 PACC
-polar_file_NASA_sc_20412.txt
+polar_file_NASA_sc_20414_take_off.txt
 
 ITER 100
-ASeq -3 3 0.1
+ASeq -5 10 0.1
 
 
 quit

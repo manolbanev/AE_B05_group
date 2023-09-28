@@ -6,29 +6,32 @@ import matplotlib.pyplot as plt
 
 names_of_airfoils = ['NACA2415','NACA_22112','NASA_sc_20710','NACA_23012','BACXXX','boeing_106','boeing_737_midspan','NASA_sc_20610','NASA_sc_20410','NASA_sc_20412','NASA_sc_20414']
 file_name = "polar_file.txt"
-alpha_i = -3
-alpha_f = 3
+names_of_airfoils_2 = ['NASA_sc_20410','NASA_sc_20412','NASA_sc_20414']
+alpha_i = -5
+alpha_f = 10
 alpha_step = 0.1
 Re = 29610844.47
+Re_2 = 23000000
+M_2 = 0.2
 n_iter = 100
 M = 0.67
 cl_needed = 0.656
 run_simulation = False
-cd_alpha = False
+cd_alpha = True
 
 def run_xfoil(airfoil_name):
-    if os.path.exists("polar_file_{0}.txt".format(airfoil_name)):
-        os.remove("polar_file_{0}.txt".format(airfoil_name))
+    if os.path.exists("polar_file_{0}_take_off.txt".format(airfoil_name)):
+        os.remove("polar_file_{0}_take_off.txt".format(airfoil_name))
 
     input_file = open("input_file.in", 'w')
     input_file.write("LOAD {0}.dat\n".format(airfoil_name))
     input_file.write(airfoil_name + '\n')
     input_file.write("PANE\n")
     input_file.write("OPER\n")
-    input_file.write("Visc {0}\n".format(Re))
-    input_file.write("M {0}\n".format(M))
+    input_file.write("Visc {0}\n".format(Re_2))
+    input_file.write("M {0}\n".format(M_2))
     input_file.write("PACC\n")
-    input_file.write("polar_file_{0}.txt\n\n".format(airfoil_name))
+    input_file.write("polar_file_{0}_take_off.txt\n\n".format(airfoil_name))
     input_file.write("ITER {0}\n".format(n_iter))
     input_file.write("ASeq {0} {1} {2}\n".format(alpha_i, alpha_f,
                                                 alpha_step))
@@ -38,13 +41,13 @@ def run_xfoil(airfoil_name):
 
     subprocess.call("xfoil.exe < input_file.in",shell=True)
 if run_simulation:
-    for i in range(11):
-        run_xfoil(names_of_airfoils[i])
+    for i in range(3):
+        run_xfoil(names_of_airfoils_2[i])
 else:
     figure, axis = plt.subplots(1, 2, figsize=(10,7))
     figure.tight_layout(pad=2.0)
     for i in range(1,4):
-        data = np.loadtxt("polar_file_{0}.txt".format(names_of_airfoils[-i]), skiprows=12)
+        data = np.loadtxt("polar_file_{0}_take_off.txt".format(names_of_airfoils[-i]), skiprows=12)
         cd=[]
         cl=[]
         alpha = []
@@ -70,7 +73,7 @@ else:
         figure, axis = plt.subplots(1, 2, figsize=(10,7))
         figure.tight_layout(pad=2.0)
         for i in range(1,4):
-            data = np.loadtxt("polar_file_{0}.txt".format(names_of_airfoils[-i]), skiprows=12)
+            data = np.loadtxt("polar_file_{0}_take_off.txt".format(names_of_airfoils[-i]), skiprows=12)
             cd=[]
             cl=[]
             cl_cd = []
