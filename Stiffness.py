@@ -37,9 +37,11 @@ def d(n) :
         distance = distance * 2 + spar_height/2
     return(distance)
 
+
 #Number of stringers :
 nstringertop = sp.interpolate.interp1d(Stringer_change,N_stringers_top,kind="previous",fill_value="extrapolate")
 nstringerbot = sp.interpolate.interp1d(Stringer_change,N_stringers_bottom,kind="previous",fill_value="extrapolate")
+
 
 #Stiffness
 def I_xx(y) :  
@@ -50,6 +52,7 @@ def J_z(y) :
     J = 1/3 * spar_height * chord(y) * width * chord(y) * t * (spar_height * chord(y) + width * chord(y)) + S_stringers * ((chord(y))**2 * (d(nstringertop(y))**2 + d(nstringerbot(y))**2))
     return(J)
 
+
 #Intigrals 
 def v(y) :
     second = - 1/(I_xx(y) * E) #change 1 to bending
@@ -57,7 +60,6 @@ def v(y) :
 def intigral(y) :
     intigral, error0 = sp.integrate.quad(v, 0, y)
     return(intigral)
-
 
 def theta(y) :
     tha = 1/(G * J_z(y)) #change 1 to torsion
