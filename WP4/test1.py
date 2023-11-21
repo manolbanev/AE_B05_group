@@ -26,11 +26,11 @@ def total_weight(span):
 # Calculate the weight distribution
 weight_distribution = wingbox_weight_distribution(span)
 
-fuel_scaling = 51500/397925.7085 
-wing_scaling = 78191/397925.7085
+fuel_scaling = 51500/397925.7085
+wing_scaling = 156381.21/397925.7085
 
 # Add an arrow at a specific point (e.g., at span = 10)
-arrow = plt.arrow(7.53, 0, 0, -32481, width=0.4, length_includes_head=True, head_width=0.9, head_length=8120, label = "Engine Weight")
+arrow = plt.arrow(3.367, 0, 0, -32481, width=0.4, length_includes_head=True, head_width=0.9, head_length=8120, label = "Engine Weight")
 
 
 # Plot the results
@@ -47,4 +47,4 @@ total_fuel = fuel_scaling*total_weight(span)
 print(f"Total Weight of the Fuel: {total_fuel:.0f} Newtons")
 
 total_wing = wing_scaling*total_weight(span)
-print(f"Total Weight of the wing structure: {total_wing:.0f} Newtons")
+print(f"Total Weight of the Fuel: {total_wing:.0f} Newtons")
