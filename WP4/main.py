@@ -2,13 +2,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 from scipy import interpolate 
-import random
 import math
+import matplotlib.animation as animation
 
 q = 61.25
 c_y = [9.84,2.45]
 y = [0,21.665]
 half_span = 21.665
+
+alpha_step = 0
 
 CL_0 = 0.148880
 CL_10 = 0.901779
@@ -89,18 +91,41 @@ def find_Cm_alpha(y,alpha):
     return Cm_func_0(y) + ((find_cm_d(alpha) - Cm_0) / (Cm_10 - Cm_0)) * (Cm_func_10(y) - Cm_func_0(y))
 
 
-def main(alpha):
-    
-    plt.plot(np.linspace(0,21.665,50),L_prime_func(np.linspace(0,21.665,50),find_Cl_alpha(np.linspace(0,21.665,50),alpha)),label = 'Lift per unit span [N/m]')
-    plt.plot(np.linspace(0,21.665,50),D_prime_func(np.linspace(0,21.665,50),find_Cd_alpha(np.linspace(0,21.665,50),alpha)),label= 'Drag per unit span [N/m]')
-    plt.plot(np.linspace(0,21.665,50),M_prime_func(np.linspace(0,21.665,50),find_Cm_alpha(np.linspace(0,21.665,50),alpha)),label= 'Moment per unit span [N]')
-    plt.legend()
-    plt.xlabel('Half wing span [m]')
-    plt.ylabel('Aerodynamic loading per unit span [N/m]')
-    plt.title('Aerodynamic loading for '+ str(alpha) +' deg angle of attack')
-    plt.show()
+#animation 
+alpha = 0
+def animate(i):
+        line1.set_ydata(L_prime_func(np.linspace(0,21.665,50),find_Cl_alpha(np.linspace(0,21.665,50),alpha+i/10)))  
+        line2.set_ydata(D_prime_func(np.linspace(0,21.665,50),find_Cd_alpha(np.linspace(0,21.665,50),alpha+i/10)))
+        line3.set_ydata(M_prime_func(np.linspace(0,21.665,50),find_Cm_alpha(np.linspace(0,21.665,50),alpha+i/10)))
+        ax.set_title('Alpha ' + str(round(alpha+i/10,2)))
+        return line1,line2,line3
 
-main(3)
+fig, ax = plt.subplots()
+ax.set_xlabel('Half wing span [m]')
+ax.set_ylabel('Lift per unit span [N/m]')
+ax.set_ylim(-600,600)
+ax.set_xlim(0,22)
+x = np.linspace(0,21.665,50)
+line1, = ax.plot(x, L_prime_func(x,find_Cl_alpha(x,alpha)))
+line2, = ax.plot(x, D_prime_func(x,find_Cd_alpha(x,alpha)))
+line3, =ax.plot(x, M_prime_func(x,find_Cm_alpha(x,alpha)))
+ani = animation.FuncAnimation(
+fig, animate, interval=0.200, blit=False, save_count=50,frames=120)
+plt.show()
+
+
+#plot for particular alpha
+# def main(alpha):    
+    # plt.plot(np.linspace(0,21.665,50),L_prime_func(np.linspace(0,21.665,50),find_Cl_alpha(np.linspace(0,21.665,50),alpha)),label = 'Lift per unit span [N/m]')
+    # plt.plot(np.linspace(0,21.665,50),D_prime_func(np.linspace(0,21.665,50),find_Cd_alpha(np.linspace(0,21.665,50),alpha)),label= 'Drag per unit span [N/m]')
+    # plt.plot(np.linspace(0,21.665,50),M_prime_func(np.linspace(0,21.665,50),find_Cm_alpha(np.linspace(0,21.665,50),alpha)),label= 'Moment per unit span [N]')
+    # plt.legend()
+    # plt.xlabel('Half wing span [m]')
+    # plt.ylabel('Aerodynamic loading per unit span [N/m]')
+    # plt.title('Aerodynamic loading for '+ str(alpha) +' deg angle of attack')
+    # plt.show()
+    
+
 
 
 
