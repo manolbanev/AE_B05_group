@@ -52,7 +52,7 @@ def J_z(y) :
 
 #Intigrals 
 def v(y) :
-    second = - 1/(I_xx(y) * E)
+    second = - 1/(I_xx(y) * E) #change 1 to bending
     return(second)
 def intigral(y) :
     intigral, error0 = sp.integrate.quad(v, 0, y)
@@ -60,7 +60,7 @@ def intigral(y) :
 
 
 def theta(y) :
-    tha = 1/(G * J_z(y))
+    tha = 1/(G * J_z(y)) #change 1 to torsion
     return(tha)
 
 
