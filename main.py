@@ -5,8 +5,8 @@ import numpy as np
 
 #const
 Cd_0 = 0.05
-A = 9
-e =0.9
+A = 7#9
+e = 0.447 #0.9
 V = 256
 ro_cruise = 0.441
 w_s=0

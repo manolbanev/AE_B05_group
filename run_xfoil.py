@@ -8,12 +8,13 @@ names_of_airfoils = ['NACA2415','NACA_22112','NASA_sc_20710','NACA_23012','BACXX
 file_name = "polar_file.txt"
 names_of_airfoils_2 = ['NASA_sc_20410','NASA_sc_20412','NASA_sc_20414']
 names_of_airfoils_3 = ['NASA_sc_20710','NASA_sc_20610']
+adsee_airfoil = ['NACA_64(2)-415']
 alpha_i = -5
-alpha_f = 30
+alpha_f = 15
 alpha_step = 0.1
 Re = 29610844.47
-Re_2 = 22300000
-M_2 = 0.2
+Re_2 =  14700000#22300000
+M_2 = 0.56#0.2
 n_iter = 100
 M = 0.67
 cl_needed = 0.656
@@ -42,14 +43,14 @@ def run_xfoil(airfoil_name):
 
     subprocess.call("xfoil.exe < input_file.in",shell=True)
 if run_simulation:
-    for i in range(3):
-        run_xfoil(names_of_airfoils_2[i])
+    for i in range(1):
+        run_xfoil(adsee_airfoil[i])
 else:
     if not cd_alpha:
         figure, axis = plt.subplots(1, 2, figsize=(10,7))
         figure.tight_layout(pad=2.0)
-        for i in range(3):
-            data = np.loadtxt("polar_file_{0}_take_off.txt".format(names_of_airfoils_2[i]), skiprows=12)
+        for i in range(1):
+            data = np.loadtxt("polar_file_{0}_take_off.txt".format(adsee_airfoil[i]), skiprows=12)
             # data = np.loadtxt('polar_9m_m0_1408.txt',skiprows=12)
             cd=[]
             cl=[]
@@ -58,9 +59,9 @@ else:
                 cd.append(d[2])
                 cl.append(d[1])
                 alpha.append(d[0])
-            axis[0].plot(alpha,cl,label = names_of_airfoils_2[i]+" slope: "+  str(np.format_float_positional(np.polyfit(alpha,cl,1)[0],2)),linewidth=3)
-            axis[0].plot(alpha,cl,label = 'R = 22.3M , M = 0.2, XFoil data'+ names_of_airfoils_2[i],linewidth=3)
-            axis[1].plot(cd,cl,'o',label = 'R = 22.3M , M = 0.2, XFoil data'+ names_of_airfoils_2[i],linewidth=3)
+            axis[0].plot(alpha,cl,label = adsee_airfoil[i]+" slope: "+  str(np.format_float_positional(np.polyfit(alpha,cl,1)[0],2)),linewidth=3)
+            axis[0].plot(alpha,cl,label = 'R = 14.7M , M = 0.56, XFoil data '+ adsee_airfoil[i],linewidth=3)
+            axis[1].plot(cd,cl,'o',label = 'R = 14.7M , M = 0.56, XFoil data '+ adsee_airfoil[i],linewidth=3)
         axis[0].set_xlabel(u'\u0251'+u'\u00B0',fontsize=16)
         axis[0].set_ylabel('Cl',fontsize = 16)
         axis[0].legend(fontsize = 14, loc="lower right")
@@ -76,8 +77,8 @@ else:
     else:
         figure, axis = plt.subplots(1, 2, figsize=(10,7))
         figure.tight_layout(pad=2.0)
-        for i in range(3):
-            data = np.loadtxt("polar_file_{0}_take_off.txt".format(names_of_airfoils_2[i]), skiprows=12)
+        for i in range(1):
+            data = np.loadtxt("polar_file_{0}_take_off.txt".format(adsee_airfoil[i]), skiprows=12)
             cd=[]
             cl=[]
             cl_cd = []
@@ -87,8 +88,8 @@ else:
                 cl.append(d[1])
                 cl_cd.append(d[1]/d[2])
                 alpha.append(d[0])
-            axis[0].plot(alpha,cd,'o',label = names_of_airfoils_2[i],linewidth=3)
-            axis[1].plot(alpha,cl_cd,'o',label = names_of_airfoils_2[i],linewidth=3)
+            axis[0].plot(alpha,cd,'o',label = adsee_airfoil[i],linewidth=3)
+            axis[1].plot(alpha,cl_cd,'o',label = adsee_airfoil[i],linewidth=3)
         axis[0].set_xlabel(u'\u0251'+u'\u00B0',fontsize=16)
         axis[0].set_ylabel('Cd',fontsize = 16)
         axis[0].legend(fontsize = 14, loc="upper left")

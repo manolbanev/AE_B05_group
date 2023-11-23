@@ -1,14 +1,14 @@
-LOAD NASA_sc_20610.dat
-NASA_sc_20610
+LOAD NACA_64(2)-415.dat
+NACA_64(2)-415
 PANE
 OPER
-Visc 22300000
-M 0.2
+Visc 14700000
+M 0.56
 PACC
-polar_file_NASA_sc_20610_take_off.txt
+polar_file_NACA_64(2)-415_take_off.txt
 
-ITER 700
-ASeq -5 25 0.1
+ITER 100
+ASeq -5 15 0.1
 
 
 quit
