@@ -7,8 +7,9 @@ import matplotlib.animation as animation
 
 q = 61.25
 c_y = [9.84, 2.45]
-y = [0, 21.665]
-half_span = 21.665
+y = [0, 22.445]
+half_span = 22.445
+length = np.linspace(0, 22.445, 50)
 
 alpha_step = 0
 
@@ -108,9 +109,9 @@ alpha = 0
 
 
 def animate(i):
-    line1.set_ydata(L_prime_func(np.linspace(0, 21.665, 50), find_Cl_alpha(np.linspace(0, 21.665, 50), alpha + i / 10)))
-    line2.set_ydata(D_prime_func(np.linspace(0, 21.665, 50), find_Cd_alpha(np.linspace(0, 21.665, 50), alpha + i / 10)))
-    line3.set_ydata(M_prime_func(np.linspace(0, 21.665, 50), find_Cm_alpha(np.linspace(0, 21.665, 50), alpha + i / 10)))
+    line1.set_ydata(L_prime_func(length, find_Cl_alpha(length, alpha + i / 10)))
+    line2.set_ydata(D_prime_func(length, find_Cd_alpha(length, alpha + i / 10)))
+    line3.set_ydata(M_prime_func(length, find_Cm_alpha(length, alpha + i / 10)))
     ax.set_title('Alpha ' + str(round(alpha + i / 10, 2)))
     return line1, line2, line3
 
@@ -120,7 +121,7 @@ ax.set_xlabel('Half wing span [m]')
 ax.set_ylabel('Lift per unit span [N/m]')
 ax.set_ylim(-600, 600)
 ax.set_xlim(0, 22)
-x = np.linspace(0, 21.665, 50)
+x = np.linspace(0, 22.445, 50)
 line1, = ax.plot(x, L_prime_func(x, find_Cl_alpha(x, alpha)))
 line2, = ax.plot(x, D_prime_func(x, find_Cd_alpha(x, alpha)))
 line3, = ax.plot(x, M_prime_func(x, find_Cm_alpha(x, alpha)))
@@ -140,4 +141,4 @@ plt.show()
 #plt.show()
 
 
-print(L_prime_func(np.linspace(0, 21.665, 50), find_Cl_alpha(np.linspace(0, 21.665, 50),0)))
+print(L_prime_func(length, find_Cl_alpha(length,0)))

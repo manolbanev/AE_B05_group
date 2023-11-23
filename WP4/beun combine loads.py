@@ -5,15 +5,15 @@ import math
 from scipy import integrate
 
 
-span = np.linspace(0, 21.665, 10)
+span = np.linspace(0, 22.445, 100)
 
 
 def get_aerodynamic(x):
 
     q = 61.25
     c_y = [9.84, 2.45]
-    y = [0, 21.665]
-    half_span = 21.665
+    y = [0, 22.445]
+    half_span = 22.445
 
     alpha_step = 0
 
@@ -100,8 +100,36 @@ def get_aerodynamic(x):
     return aerodynamic_output
 
 
-def get_inertial():
-        return
+def get_inertial(point):
+
+    c_root = 10.10  # m
+    c_tip = 2.73  # m
+
+    def chord_distribution(x, c_root, c_tip, wingspan):
+        return c_root - ((c_root - c_tip) / wingspan) * x
+
+    # plt.plot(span, chord_distribution(span, c_root, c_tip, 22.445))
+
+    def A(x):
+        chord_at_x = chord_distribution(x, c_root, c_tip, wingspan=22.445)
+        height = 0.0942 * chord_at_x
+        length = 0.5 * chord_at_x
+        return 0.95 * height * length
+
+
+    def Wfps(x):
+        W_fperspan = (9.81 * A(x) * 800)[:800]
+        #W_fperspan = np.concatenate((W_fperspan, np.zeros(200)))
+        return W_fperspan
+
+
+    def WW(x):
+        WA = A(x) * 9.81 * 173.7434
+        return (WA)
+
+    inertial_loading = WW(point) + Wfps(point)
+
+    return inertial_loading
 
 
 def get_moment(distribution, limit):
@@ -118,13 +146,27 @@ def get_integrated_idiot():
     return values
 
 
+def engine_weight():
+    values = []
+    for i in span:
+        if abs(7.5 - i) < 000.1:
+            values.append(32480)
+        else:
+            values.append(0)
+    return values
+
+
+def combined_load(x):
+    combined = 625 * get_aerodynamic(x) - get_inertial(x) - engine_weight()
+    return combined
+
 
 fig, ax = plt.subplots()
 ax.set_xlabel('Half wing span [m]')
 ax.set_ylabel('Load [N]')
 x = span
-line1 = ax.plot(x, get_aerodynamic(x))
-line2 = ax.plot(get_integrated_idiot())
+line1 = ax.plot(x, combined_load(x))
+#line2 = ax.plot(get_integrated_idiot())
 plt.show()
 
 
