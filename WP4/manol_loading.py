@@ -138,3 +138,6 @@ plt.show()
 # plt.ylabel('Aerodynamic loading per unit span [N/m]')
 # plt.title('Aerodynamic loading for '+ str(alpha) +' deg angle of attack')
 #plt.show()
+
+
+print(L_prime_func(np.linspace(0, 21.665, 50), find_Cl_alpha(np.linspace(0, 21.665, 50),0)))
