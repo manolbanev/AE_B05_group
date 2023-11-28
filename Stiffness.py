@@ -10,13 +10,17 @@ c_tip = 2.73 #m
 span = 44.89 #m
 E = 68.9 * 10**9 #m
 G = 26 * 10**9 #m
+rho = 2700
+nmax = 2.729
+nmin = -1
+nsafety = 1.5
 #Variables
 N_stringers_top = [4]
 N_stringers_bottom = [4]
 Stringer_change = [0]
-S_stringers = 0.5 #m^2
-t = 0.001 #m
-
+S_stringers = 0.001 #m^2
+t1 = 0.001 #m
+t2 = 0.002
 
 #chord and distance
 def chord(a) :
@@ -45,11 +49,15 @@ nstringerbot = sp.interpolate.interp1d(Stringer_change,N_stringers_bottom,kind="
 
 #Stiffness
 def I_xx(y) :  
-    I = S_stringers * (width * spar_height * chord(y))**2 * (nstringertop(y) + nstringerbot(y)) + 1/3 * width * chord(y) * (spar_height * chord(y))**2 * t
+    w = width * chord(y)
+    h = spar_height * chord(y)
+    I = S_stringers * (h/2)**2 * (nstringertop(y) + nstringerbot(y)) + 1/12 * t2 * h**3 + 2 * w * t1 * (h/2)**2
     return(I)
 
 def J_z(y) :
-    J = 1/3 * spar_height * chord(y) * width * chord(y) * t * (spar_height * chord(y) + width * chord(y)) + S_stringers * ((chord(y))**2 * (d(nstringertop(y))**2 + d(nstringerbot(y))**2))
+    w = width * chord(y)
+    h = spar_height * chord(y)
+    J = S_stringers * ((chord(y))**2 * (d(nstringertop(y))**2 + d(nstringerbot(y))**2)) + 2 * w * t1 * (w**2 + t1**2)/12 + 2 * h * t2 * (h**2 + t2**2)/12 + 2 * w * t1 * (h/2)**2 + 2 * h * t2 *(w/2)**2
     return(J)
 
 
@@ -65,7 +73,7 @@ def theta(y) :
     tha = 1/(G * J_z(y)) #change 1 to torsion
     return(tha)
 
-
+"""
 #plotting graph
 x = [0]
 I = [I_xx(0)]
@@ -108,3 +116,17 @@ plt.xlabel("Spanwise position [m]")
 plt.ylabel("Angle [deg]")
 
 plt.show()
+"""
+#wingbox validity and weight
+V_total = 2 * t1 * (chord(0) + chord(span/2))/2 * width * span/2 + 2 * t2 * (chord(0) + chord(span/2))/2 * spar_height * span/2 
+l = 0
+for i in range(int((len(Stringer_change)-1))) :
+    l = l + 1
+    V_total = V_total + (nstringerbot(i) + nstringertop(i)) * (Stringer_change[i+1] - Stringer_change[i]) * S_stringers
+V_total = V_total + (nstringerbot(l) + nstringerbot(l)) * (span/2 - Stringer_change[-1] ) * S_stringers
+
+estimate1, error1 = sp.integrate.quad(intigral, 0, span/2)
+estimate2, error2 = sp.integrate.quad(theta, 0, span/2)
+print("the deflection is between", nsafety * nmax * estimate1, "and", nsafety * nmin * estimate1, "m")
+print("the twist angle is between", nsafety * nmax * estimate2 * 180/math.pi, "and", nsafety * nmin * estimate2 * 180/math.pi, "°")
+print("The weight is ", 2 * V_total * rho, "kg")
