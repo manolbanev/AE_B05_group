@@ -4,8 +4,12 @@ import scipy as sp
 import math
 from scipy import integrate
 
+
+
 span = np.linspace(0, 22.445, 50)
 pylon = span[16:18]
+
+
 
 
 def get_aerodynamic(x):
@@ -132,35 +136,39 @@ def get_inertial(point):
     return inertial_loading
 
 
-def get_shear(distribution, limit):
-    shear_distribution, shear_error = sp.integrate.quad(distribution, 0, limit)
+def get_shear(distribution, start_int, limit):
+    shear_distribution, shear_error = sp.integrate.quad(distribution, start_int, limit)
     return shear_distribution
 def get_moment(distribution, limit):
-    moment_distribution, moment_error = sp.integrate.quad(distribution, 0, limit)
+    moment_distribution, momoent_error = sp.integrate.quad(distribution, 0, limit)
     return moment_distribution
 
 def get_integrated_idiot():
-    #values_shear = [-332803.674]
-    #values_moment = [3004889]
-    values_shear=[]
-    values_moment=[]
-    combined_load_distribution = sp.interpolate.interp1d(span, combined_load(span), kind='quadratic',fill_value='extrapolate')
+    values_shear = []
+    values_moment = []
+    combined_load_distribution = sp.interpolate.interp1d(span, get_aerodynamic(span), kind='quadratic',fill_value='extrapolate')
 #0 - 16
-    for i in span[:16]:
-        values_shear.append(get_shear(combined_load_distribution, i))
+   # for i in span[:16]:
+    #    values_shear.append(get_shear(combined_load_distribution, i))
     # 16 - 18
-    for i in span[16:18]:
-        values_shear.append(get_shear(combined_load_distribution, i))
+    #for i in span[16:18]:
+    #    values_shear.append(get_shear(combined_load_distribution, i))
     # 18 - 40
-    for i in span[18:40]:
-        values_shear.append(get_shear(combined_load_distribution, i))
+    #for i in span[18:40]:
+    #    values_shear.append(get_shear(combined_load_distribution, i))
     # 40 - 50
-    for i in span[40:50]:
-        values_shear.append(get_shear(combined_load_distribution, i))
+    #for i in span[40:50]:
+    #    values_shear.append(get_shear(combined_load_distribution, i))
     #print('value: ', values, 'point: ', point)
-    new_values_shear = [i * -1 + 332803.674 for i in values_shear]
-    shear_function =  sp.interpolate.interp1d(span,new_values_shear,kind='quadratic',fill_value='extrapolate')
-    # plt.plot(span,shear_function(span),color='blue')
+    for i in span:
+        if i == 0:
+            values_shear.append(0)
+        else:
+            a = 0
+            values_shear.append(get_shear(combined_load_distribution, span[a], i))
+            a += 1
+
+    shear_function =  sp.interpolate.interp1d(span,values_shear,kind='quadratic',fill_value='extrapolate')
     for i in span[:16]:
         values_moment.append(get_moment(shear_function, i))
         # 16 - 18
@@ -173,8 +181,8 @@ def get_integrated_idiot():
     for i in span[40:50]:
         values_moment.append(get_moment(shear_function, i))
 
-    new_values_moment = [i - 4464889.461627086 for i in values_moment]
-    return new_values_shear , new_values_moment
+    new_values_shear = [i * -1 for i in values_shear]
+    return new_values_shear,values_moment
 
 
 def engine_weight():
@@ -218,17 +226,12 @@ def sum_loads(x):
 fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
 plt.subplots_adjust(hspace=0.8)
 x = span
-
-ax1.plot(x, combined_load(x), color='red')
+ax1.plot(x, get_aerodynamic(x), color='red')
 ax1.set_title('Load distribution')
 ax2.plot(x, get_integrated_idiot()[0], color='lime')
 ax2.set_title('Shear')
 ax3.plot(x, get_integrated_idiot()[1], color='blue')
 ax3.set_title('Moment')
-plt.show()
-
-
-# plt.plot(x, get_integrated_idiot()[1])
 plt.show()
 
 
