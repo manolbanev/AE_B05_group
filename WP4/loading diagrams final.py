@@ -21,6 +21,9 @@ def get_aerodynamic(x):
     y = [0, 22.445]
     cL_0 = 0.149649
     cL_10 = 0.907325
+    Cm_0 = -0.24373
+    Cm_10 = -1.17556
+    alpha = 0
 
     c_y_func = sp.interpolate.interp1d(y, c_y, kind='linear', fill_value="extrapolate")
 
@@ -55,6 +58,9 @@ def get_aerodynamic(x):
     def L_prime_func(y, Cl_func):
         return Cl_func * q * c_y_func(y)
 
+    def M_prime_func(y,Cm_func):
+        return Cm_func*q*c_y_func(y)**2
+
     def find_cl_d(alpha):
         coef = math.sin(math.radians(alpha)) / math.sin(math.radians(10))
         Cl_d = coef * (cL_10 - cL_0) + cL_0
@@ -68,9 +74,18 @@ def get_aerodynamic(x):
                                  load_file(file_names[1])[3])[0]
         return Cl_func_0(y) + ((Cl_d - cL_0) / (cL_10 - cL_0)) * (Cl_func_10(y) - Cl_func_0(y))
 
-    aerodynamic_output = L_prime_func(x, find_Cl_alpha(x, 0))
+    def find_cm_d(alpha):
+        return math.sin(math.radians(alpha))/math.sin(math.radians(10)) * (Cm_10 - Cm_0) + Cm_0
+    
+    def find_Cm_alpha(y,alpha):
+        Cm_func_0 = interpolate(load_file(file_names[0])[0],load_file(file_names[0])[1],load_file(file_names[0])[2],load_file(file_names[0])[3])[2]
+        Cm_func_10 = interpolate(load_file(file_names[1])[0],load_file(file_names[1])[1],load_file(file_names[1])[2],load_file(file_names[1])[3])[2]
+        return Cm_func_0(y) + ((find_cm_d(alpha) - Cm_0) / (Cm_10 - Cm_0)) * (Cm_func_10(y) - Cm_func_0(y))
 
-    return aerodynamic_output
+    aerodynamic_output = L_prime_func(x, find_Cl_alpha(x, alpha))
+    torque_output = M_prime_func(x, find_Cm_alpha(x, alpha))
+    
+    return aerodynamic_output,torque_output
 
 
 def get_inertial(point):
@@ -169,7 +184,21 @@ def engine_weight():
             values[a] = 0
             a += 1
     return values
-
+    
+def engine_torque():
+    values = np.zeros_like(span)
+    trust = 191270
+    pylon_lenght = 0.725
+    a = 0
+    for i in span:
+        if i in pylon:
+            values[a] = trust*pylon_lenght
+            a += 1
+        else:
+            values[a] = 0
+            a += 1
+    return values
+    
 def get_stiffness():
 
 
@@ -350,9 +379,13 @@ def combined_load(x):
     combined = q_scale * get_aerodynamic(x) - get_inertial(x) - engine_weight()
     return combined
 
+def combined_torque(x):
+    combined_torque = q_scale *get_aerodynamic(x)[1]-engine_torque()
+    return combined_torque
+
 """""
 # plotting the graphs
-fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
+fig, (ax1, ax2, ax3,ax4) = plt.subplots(4, 1)
 plt.subplots_adjust(hspace=0.8)
 x = span
 ax1.plot(x, combined_load(x), color='red')
@@ -361,6 +394,8 @@ ax2.plot(x, get_integrated_idiot()[0], color='lime')
 ax2.set_title('Shear')
 ax3.plot(x, get_integrated_idiot()[1], color='blue')
 ax3.set_title('Moment')
+ax4.plot(x, combined_torque(x), color='red')
+ax4.set_title('Torque')
 plt.show()
 """
 
