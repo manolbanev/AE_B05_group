@@ -9,6 +9,7 @@ from scipy import integrate
 # constants for the wing
 span = np.linspace(0, 22.445, 50)
 pylon = span[16:18]
+q_scale = 625
 
 
 # obtaining aerodynamics load from simulations
@@ -111,6 +112,14 @@ def get_moment(distribution, limit):
     return moment_distribution
 
 
+def get_reaction_moment(distribution, span):
+    reaction_moment, moment_error = sp.integrate.quad(distribution, 0, span)
+    return reaction_moment
+def get_reaction_force(distribution, span):
+    reactio_force, moment_error = sp.integrate.quad(distribution, 0, span)
+    return reactio_force
+
+
 def get_integrated_idiot():
 
     values_shear = []
@@ -129,8 +138,9 @@ def get_integrated_idiot():
     # 40 - 50
     for i in span[40:50]:
         values_shear.append(get_shear(combined_load_distribution, i))
-
-    new_values_shear = [i * -1 + 332803.674 for i in values_shear]
+    get_reaction_force(combined_load_distribution,span[-1])
+    
+    new_values_shear = [i * -1 + get_reaction_force(combined_load_distribution,span[-1]) for i in values_shear]
     shear_function = sp.interpolate.interp1d(span, new_values_shear, kind='quadratic', fill_value='extrapolate')
 
     for i in span[:16]:
@@ -145,7 +155,7 @@ def get_integrated_idiot():
     for i in span[40:50]:
         values_moment.append(get_moment(shear_function, i))
 
-    new_values_moment = [i - 4464889.461627086 for i in values_moment]
+    new_values_moment = [i - get_reaction_moment(shear_function,span[-1]) for i in values_moment]
     return new_values_shear, new_values_moment
 
 
@@ -163,7 +173,7 @@ def engine_weight():
 
 
 def combined_load(x):
-    combined = 625 * get_aerodynamic(x) - get_inertial(x) - engine_weight()
+    combined = q_scale * get_aerodynamic(x) - get_inertial(x) - engine_weight()
     return combined
 
 # plotting the graphs
