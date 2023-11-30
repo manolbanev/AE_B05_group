@@ -142,7 +142,6 @@ def get_integrated_idiot():
     
     new_values_shear = [i * -1 + get_reaction_force(combined_load_distribution,span[-1]) for i in values_shear]
     shear_function = sp.interpolate.interp1d(span, new_values_shear, kind='quadratic', fill_value='extrapolate')
-
     for i in span[:16]:
         values_moment.append(get_moment(shear_function, i))
         # 16 - 18
@@ -173,6 +172,7 @@ def engine_weight():
 
 def get_stiffness():
 
+
     # given
     spar_height = 0.0942  # m
     width = 0.5  # m
@@ -181,12 +181,17 @@ def get_stiffness():
     span_elliot = 44.89  # m
     E = 68.9 * 10 ** 9  # m
     G = 26 * 10 ** 9  # m
+    rho = 2700
+    nmax = 2.729
+    nmin = -1
+    nsafety = 1.5
     # Variables
     N_stringers_top = [4]
     N_stringers_bottom = [4]
     Stringer_change = [0]
-    S_stringers = 0.5  # m^2
-    t = 0.001  # m
+    S_stringers = 0.001  # m^2
+    t1 = 0.001  # m
+    t2 = 0.002
 
     # chord and distance
     def chord(a):
@@ -214,49 +219,89 @@ def get_stiffness():
 
     # Stiffness
     def I_xx(y):
-        I = S_stringers * (width * spar_height * chord(y)) ** 2 * (
-                    nstringertop(y) + nstringerbot(y)) + 1 / 3 * width * chord(y) * (spar_height * chord(y)) ** 2 * t
+        w = width * chord(y)
+        h = spar_height * chord(y)
+        I = S_stringers * (h / 2) ** 2 * (nstringertop(y) + nstringerbot(y)) + 1 / 12 * t2 * h ** 3 + 2 * w * t1 * (
+                    h / 2) ** 2
         return (I)
 
     def J_z(y):
-        J = 1 / 3 * spar_height * chord(y) * width * chord(y) * t * (
-                    spar_height * chord(y) + width * chord(y)) + S_stringers * (
-                        (chord(y)) ** 2 * (d(nstringertop(y)) ** 2 + d(nstringerbot(y)) ** 2))
+        w = width * chord(y)
+        h = spar_height * chord(y)
+        J = S_stringers * ((chord(y)) ** 2 * (d(nstringertop(y)) ** 2 + d(nstringerbot(y)) ** 2)) + 2 * w * t1 * (
+                    w ** 2 + t1 ** 2) / 12 + 2 * h * t2 * (h ** 2 + t2 ** 2) / 12 + 2 * w * t1 * (
+                        h / 2) ** 2 + 2 * h * t2 * (w / 2) ** 2
         return (J)
 
     # Intigrals
     def v(y):
-        print('calculating')
-        second = np.zeros_like(span)
-        for x in span:
-            print(x)
-            second[x] = [i / (I_xx(y) * E) for i in get_integrated_idiot()[1]] # change 1 to bending
+        second = []
+        for i in get_integrated_idiot()[1]:
+            a = 0
+            second.append((-1 * i) / (I_xx(y)[a] * E))
+            a += 1
         return second
 
-    def intigral(y):
-        intigral, error0 = sp.integrate.quad(v, 0, y)
-        return intigral
+    def intigral(function, limit):
+        deflection_distribution, deflection_error = sp.integrate.quad(function, 0, limit)
+        return deflection_distribution
+
+    def get_deflection():
+        values_deflection = []
+        values_deflection_actual = []
+        deflection_function = sp.interpolate.interp1d(span, v(span), kind='quadratic', fill_value='extrapolate')
+        # 0 - 16
+        for s in span[:16]:
+            values_deflection.append(intigral(deflection_function, s))
+        # 16 - 18
+        for i in span[16:18]:
+            values_deflection.append(intigral(deflection_function, s))
+        # 18 - 40
+        for i in span[18:40]:
+            values_deflection.append(intigral(deflection_function, s))
+        # 40 - 50
+        for i in span[40:50]:
+            values_deflection.append(intigral(deflection_function, s))
+
+        deflection_prime = sp.interpolate.interp1d(span, values_deflection, kind='quadratic', fill_value='extrapolate')
+        # 0 - 16
+        for s in span[:16]:
+            values_deflection_actual.append(intigral(deflection_prime, s))
+        # 16 - 18
+        for i in span[16:18]:
+            values_deflection_actual.append(intigral(deflection_prime, s))
+        # 18 - 40
+        for i in span[18:40]:
+            values_deflection_actual.append(intigral(deflection_prime, s))
+        # 40 - 50
+        for i in span[40:50]:
+            values_deflection_actual.append(intigral(deflection_prime, s))
+
+        return values_deflection_actual
 
     #def theta(y):
         #tha = 1 / (G * J_z(y))  # change 1 to torsion
         #return (tha)
 
-    # plotting graph
+    """
+    #plotting graph
     x = [0]
     I = [I_xx(0)]
     J = [J_z(0)]
     j = 0
     Deflection = [0]
     Angle = [0]
-    while x[-1] < span_elliot / 2:
+    while x[-1] < span/2 :
         j = j + 0.01
         x.append(j)
         I.append(I_xx(x[-1]))
         J.append(J_z(x[-1]))
         estimate1, error1 = sp.integrate.quad(intigral, 0, j)
-        #estimate2, error2 = sp.integrate.quad(theta, 0, j)
+        estimate2, error2 = sp.integrate.quad(theta, 0, j)
         Deflection.append(estimate1)
-        Angle.append(estimate2 * 180 / math.pi)
+        Angle.append(estimate2 * 180/math.pi)
+
+
 
     plt.subplot(221)
     plt.plot(x, I)
@@ -274,18 +319,38 @@ def get_stiffness():
     plt.title("Deflection diagram")
     plt.ylabel("Deflection[m]")
 
-    plt.subplot(224)
+    plt.subplot(224)    
     plt.plot(x, Angle)
     plt.title("Angle Diagram")
     plt.xlabel("Spanwise position [m]")
     plt.ylabel("Angle [deg]")
 
     plt.show()
+    """
 
+    """""
+    # wingbox validity and weight
+    V_total = 2 * t1 * (chord(0) + chord(span_elliot / 2)) / 2 * width * span_elliot / 2 + 2 * t2 * (
+                chord(0) + chord(span_elliot / 2)) / 2 * spar_height * span_elliot / 2
+    l = 0
+    for i in range(int((len(Stringer_change) - 1))):
+        l = l + 1
+        V_total = V_total + (nstringerbot(i) + nstringertop(i)) * (
+                    Stringer_change[i + 1] - Stringer_change[i]) * S_stringers
+    V_total = V_total + (nstringerbot(l) + nstringerbot(l)) * (span_elliot/ 2 - Stringer_change[-1]) * S_stringers
+
+   # estimate1, error1 = sp.integrate.quad(intigral(span), 0, (span_elliot / 2))
+    #estimate2, error2 = sp.integrate.quad(theta, 0, span_elliot / 2)
+    #print("the deflection is between", nsafety * nmax * estimate1, "and", nsafety * nmin * estimate1, "m")
+    #print("the twist angle is between", nsafety * nmax * estimate2 * 180 / math.pi, "and",
+          #nsafety * nmin * estimate2 * 180 / math.pi, "°")
+    #print("The weight is ", 2 * V_total * rho, "kg")
+"""
 def combined_load(x):
     combined = q_scale * get_aerodynamic(x) - get_inertial(x) - engine_weight()
     return combined
 
+"""""
 # plotting the graphs
 fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
 plt.subplots_adjust(hspace=0.8)
@@ -297,5 +362,5 @@ ax2.set_title('Shear')
 ax3.plot(x, get_integrated_idiot()[1], color='blue')
 ax3.set_title('Moment')
 plt.show()
+"""
 
-get_stiffness()
