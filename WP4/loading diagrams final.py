@@ -23,6 +23,8 @@ def get_aerodynamic(x):
     cL_10 = 0.907325
     Cm_0 = -0.24373
     Cm_10 = -1.17556
+    Cd_0 = 0.001000
+    Cd_10 = 0.036043
     alpha = 0
 
     c_y_func = sp.interpolate.interp1d(y, c_y, kind='linear', fill_value="extrapolate")
@@ -57,9 +59,12 @@ def get_aerodynamic(x):
 
     def L_prime_func(y, Cl_func):
         return Cl_func * q * c_y_func(y)
-
+    
     def M_prime_func(y,Cm_func):
         return Cm_func*q*c_y_func(y)**2
+    
+    def D_prime_func(y,Cd_func):
+        return Cd_func*q*c_y_func(y)
 
     def find_cl_d(alpha):
         coef = math.sin(math.radians(alpha)) / math.sin(math.radians(10))
@@ -73,7 +78,7 @@ def get_aerodynamic(x):
         Cl_func_10 = interpolate(load_file(file_names[1])[0], load_file(file_names[1])[1], load_file(file_names[1])[2],
                                  load_file(file_names[1])[3])[0]
         return Cl_func_0(y) + ((Cl_d - cL_0) / (cL_10 - cL_0)) * (Cl_func_10(y) - Cl_func_0(y))
-
+    
     def find_cm_d(alpha):
         return math.sin(math.radians(alpha))/math.sin(math.radians(10)) * (Cm_10 - Cm_0) + Cm_0
     
@@ -82,10 +87,24 @@ def get_aerodynamic(x):
         Cm_func_10 = interpolate(load_file(file_names[1])[0],load_file(file_names[1])[1],load_file(file_names[1])[2],load_file(file_names[1])[3])[2]
         return Cm_func_0(y) + ((find_cm_d(alpha) - Cm_0) / (Cm_10 - Cm_0)) * (Cm_func_10(y) - Cm_func_0(y))
 
-    aerodynamic_output = L_prime_func(x, find_Cl_alpha(x, alpha))
+    def find_cd_d(alpha):
+        return Cd_0 + ((Cd_10-Cd_0)/(cL_10**2 - cL_0**2) * (find_cl_d(alpha)**2 - cL_0**2))
+
+
+    def find_Cd_alpha(y,alpha):
+        Cd_func_0 = interpolate(load_file(file_names[0])[0],load_file(file_names[0])[1],load_file(file_names[0])[2],load_file(file_names[0])[3])[1]
+        Cd_func_10 = interpolate(load_file(file_names[1])[0],load_file(file_names[1])[1],load_file(file_names[1])[2],load_file(file_names[1])[3])[1]
+        return Cd_func_0(y) + ((Cd_func_10(y)-Cd_func_0(y))/(Cd_10 - Cd_0)) * (find_cd_d(alpha) - Cd_0)
+
+
+
+
+    aerodynamic_output = L_prime_func(x, find_Cl_alpha(x, alpha)) #edit angle of attack 
     torque_output = M_prime_func(x, find_Cm_alpha(x, alpha))
-    
-    return aerodynamic_output,torque_output
+    drag_output = D_prime_func(x,find_Cd_alpha(x,alpha))
+
+
+    return aerodynamic_output,torque_output,drag_output
 
 
 def get_inertial(point):
