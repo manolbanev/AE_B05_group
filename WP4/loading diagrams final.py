@@ -203,7 +203,8 @@ def engine_weight():
             values[a] = 0
             a += 1
     return values
-    
+
+
 def engine_torque():
     values = np.zeros_like(span)
     trust = 191270
@@ -217,10 +218,12 @@ def engine_torque():
             values[a] = 0
             a += 1
     return values
-    
+
+
+
+
+
 def get_stiffness():
-
-
     # given
     spar_height = 0.0942  # m
     width = 0.5  # m
@@ -246,40 +249,55 @@ def get_stiffness():
         c = c_root - (c_root - c_tip) * 2 * a / span_elliot
         return (c)
 
-    def d(n):
+    """""
+    def d(function):
         distance = 0
-        if n == 1:
-            return (spar_height / 2)
-        elif n % 2 == 0:
-            for k in range(int(n / 2)):
-                distance = distance + ((spar_height / 2) ** 2 + (width / 2 - width / n * k) ** 2) ** 0.5
-            distance = 2 * distance
-        else:
-            for k in range(int((n - 1) / 2)):
-                distance = distance + ((spar_height / 2) ** 2 + (width / 2 - width / n * k) ** 2) ** 0.5
-            distance = distance * 2 + spar_height / 2
-        return (distance)
+        for i in span:
+            n = function
+            if n[i] == 1:
+                return (spar_height / 2)
+            elif n[i] % 2 == 0:
+                for k in range(int(n[i] / 2)):
+                    distance = distance + ((spar_height / 2) ** 2 + (width / 2 - width / n[i] * k) ** 2) ** 0.5
+                distance = 2 * distance
+            else:
+                for k in range(int((n - 1) / 2)):
+                    distance = distance + ((spar_height / 2) ** 2 + (width / 2 - width / n[i] * k) ** 2) ** 0.5
+                distance = distance * 2 + spar_height / 2
+        return distance
 
     # Number of stringers :
     nstringertop = sp.interpolate.interp1d(Stringer_change, N_stringers_top, kind="previous", fill_value="extrapolate")
     nstringerbot = sp.interpolate.interp1d(Stringer_change, N_stringers_bottom, kind="previous",
                                            fill_value="extrapolate")
+    """""
+
+    def stringers_top(shape, value):
+        n = shape.shape
+        string_top = np.full(n, value)
+        return string_top
+
+    def stringers_bottom(shape, value):
+        n = shape.shape
+        string_bot = np.full(n, value)
+        return string_bot
+
 
     # Stiffness
     def I_xx(y):
         w = width * chord(y)
         h = spar_height * chord(y)
-        I = S_stringers * (h / 2) ** 2 * (nstringertop(y) + nstringerbot(y)) + 1 / 12 * t2 * h ** 3 + 2 * w * t1 * (
+        I = S_stringers * (h / 2) ** 2 * (stringers_top(span, 4) + stringers_bottom(span, 4)) + 1 / 12 * t2 * h ** 3 + 2 * w * t1 * (
                     h / 2) ** 2
         return (I)
 
     def J_z(y):
         w = width * chord(y)
         h = spar_height * chord(y)
-        J = S_stringers * ((chord(y)) ** 2 * (d(nstringertop(y)) ** 2 + d(nstringerbot(y)) ** 2)) + 2 * w * t1 * (
+        J = S_stringers * ((chord(y)) ** 2 * (stringers_top(span, 4) ** 2 + stringers_bottom(span, 4) ** 2)) + 2 * w * t1 * (
                     w ** 2 + t1 ** 2) / 12 + 2 * h * t2 * (h ** 2 + t2 ** 2) / 12 + 2 * w * t1 * (
                         h / 2) ** 2 + 2 * h * t2 * (w / 2) ** 2
-        return (J)
+        return J
 
     # Intigrals
     def v(y):
@@ -299,37 +317,33 @@ def get_stiffness():
         values_deflection_actual = []
         deflection_function = sp.interpolate.interp1d(span, v(span), kind='quadratic', fill_value='extrapolate')
         # 0 - 16
-        for s in span[:16]:
-            values_deflection.append(intigral(deflection_function, s))
+        for i in span[:16]:
+            values_deflection.append(intigral(deflection_function, i))
         # 16 - 18
         for i in span[16:18]:
-            values_deflection.append(intigral(deflection_function, s))
+            values_deflection.append(intigral(deflection_function, i))
         # 18 - 40
         for i in span[18:40]:
-            values_deflection.append(intigral(deflection_function, s))
+            values_deflection.append(intigral(deflection_function, i))
         # 40 - 50
         for i in span[40:50]:
-            values_deflection.append(intigral(deflection_function, s))
+            values_deflection.append(intigral(deflection_function, i))
 
         deflection_prime = sp.interpolate.interp1d(span, values_deflection, kind='quadratic', fill_value='extrapolate')
         # 0 - 16
-        for s in span[:16]:
-            values_deflection_actual.append(intigral(deflection_prime, s))
+        for i in span[:16]:
+            values_deflection_actual.append(intigral(deflection_prime, i))
         # 16 - 18
         for i in span[16:18]:
-            values_deflection_actual.append(intigral(deflection_prime, s))
+            values_deflection_actual.append(intigral(deflection_prime, i))
         # 18 - 40
         for i in span[18:40]:
-            values_deflection_actual.append(intigral(deflection_prime, s))
+            values_deflection_actual.append(intigral(deflection_prime, i))
         # 40 - 50
         for i in span[40:50]:
-            values_deflection_actual.append(intigral(deflection_prime, s))
+            values_deflection_actual.append(intigral(deflection_prime, i))
 
         return values_deflection_actual
-
-    #def theta(y):
-        #tha = 1 / (G * J_z(y))  # change 1 to torsion
-        #return (tha)
 
     """
     #plotting graph
@@ -348,44 +362,19 @@ def get_stiffness():
         estimate2, error2 = sp.integrate.quad(theta, 0, j)
         Deflection.append(estimate1)
         Angle.append(estimate2 * 180/math.pi)
+        """
 
 
 
-    plt.subplot(221)
-    plt.plot(x, I)
-    plt.title("Moment of inertia diagram")
-    plt.ylabel("Moment of inertia [m^4]")
-
-    plt.subplot(223)
-    plt.plot(x, J)
-    plt.title("Torsional stiffness")
-    plt.xlabel("Spanwise position [m]")
-    plt.ylabel("Polar moment of inertia [m^4]")
-
-    plt.subplot(222)
-    plt.plot(x, Deflection)
-    plt.title("Deflection diagram")
-    plt.ylabel("Deflection[m]")
-
-    plt.subplot(224)    
-    plt.plot(x, Angle)
-    plt.title("Angle Diagram")
-    plt.xlabel("Spanwise position [m]")
-    plt.ylabel("Angle [deg]")
-
-    plt.show()
-    """
-
-    """""
     # wingbox validity and weight
     V_total = 2 * t1 * (chord(0) + chord(span_elliot / 2)) / 2 * width * span_elliot / 2 + 2 * t2 * (
                 chord(0) + chord(span_elliot / 2)) / 2 * spar_height * span_elliot / 2
     l = 0
     for i in range(int((len(Stringer_change) - 1))):
         l = l + 1
-        V_total = V_total + (nstringerbot(i) + nstringertop(i)) * (
+        V_total = V_total + (stringers_bottom(span, 4) + stringers_top(span, 4)) * (
                     Stringer_change[i + 1] - Stringer_change[i]) * S_stringers
-    V_total = V_total + (nstringerbot(l) + nstringerbot(l)) * (span_elliot/ 2 - Stringer_change[-1]) * S_stringers
+    V_total = V_total + (stringers_top(span, 4) + stringers_bottom(span, 4)) * (span_elliot/ 2 - Stringer_change[-1]) * S_stringers
 
    # estimate1, error1 = sp.integrate.quad(intigral(span), 0, (span_elliot / 2))
     #estimate2, error2 = sp.integrate.quad(theta, 0, span_elliot / 2)
@@ -393,16 +382,29 @@ def get_stiffness():
     #print("the twist angle is between", nsafety * nmax * estimate2 * 180 / math.pi, "and",
           #nsafety * nmin * estimate2 * 180 / math.pi, "°")
     #print("The weight is ", 2 * V_total * rho, "kg")
-"""
+
+    return J_z(span)
+
+
 def combined_load(x):
-    combined = q_scale * get_aerodynamic(x) - get_inertial(x) - engine_weight()
+    combined = q_scale * get_aerodynamic(x)[0] - get_inertial(x) - engine_weight()
     return combined
+
 
 def combined_torque(x):
     combined_torque = q_scale *get_aerodynamic(x)[1]-engine_torque()
     return combined_torque
 
-"""""
+
+def get_twist(x):
+    torque_function = combined_torque(x)
+    twist_values = []
+    J_z = get_stiffness()
+    d_theta =
+
+
+    return twist_values
+
 # plotting the graphs
 fig, (ax1, ax2, ax3,ax4) = plt.subplots(4, 1)
 plt.subplots_adjust(hspace=0.8)
@@ -413,8 +415,9 @@ ax2.plot(x, get_integrated_idiot()[0], color='lime')
 ax2.set_title('Shear')
 ax3.plot(x, get_integrated_idiot()[1], color='blue')
 ax3.set_title('Moment')
-ax4.plot(x, combined_torque(x), color='red')
+ax4.plot(x, combined_torque(x), color='cyan')
 ax4.set_title('Torque')
 plt.show()
-"""
+
+
 
