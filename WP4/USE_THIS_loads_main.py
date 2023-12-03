@@ -1,12 +1,11 @@
-import math
-
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy as sp
 import math
 from scipy import integrate
 
-# constants for the wing
+
+# constants
 span = np.linspace(0, 22.445, 50)
 pylon = span[16:18]
 q_scale = 625
@@ -15,7 +14,6 @@ G = 26 * 10 ** 9
 
 # obtaining aerodynamics load from simulations
 def get_aerodynamic(x):
-
     # constants for obtaining aerodynamic load
     q = 61.25
     c_y = [9.84, 2.45]
@@ -60,12 +58,12 @@ def get_aerodynamic(x):
 
     def L_prime_func(y, Cl_func):
         return Cl_func * q * c_y_func(y)
-    
-    def M_prime_func(y,Cm_func):
-        return Cm_func*q*c_y_func(y)**2
-    
-    def D_prime_func(y,Cd_func):
-        return Cd_func*q*c_y_func(y)
+
+    def M_prime_func(y, Cm_func):
+        return Cm_func * q * c_y_func(y) ** 2
+
+    def D_prime_func(y, Cd_func):
+        return Cd_func * q * c_y_func(y)
 
     def find_cl_d(alpha):
         coef = math.sin(math.radians(alpha)) / math.sin(math.radians(10))
@@ -79,33 +77,32 @@ def get_aerodynamic(x):
         Cl_func_10 = interpolate(load_file(file_names[1])[0], load_file(file_names[1])[1], load_file(file_names[1])[2],
                                  load_file(file_names[1])[3])[0]
         return Cl_func_0(y) + ((Cl_d - cL_0) / (cL_10 - cL_0)) * (Cl_func_10(y) - Cl_func_0(y))
-    
+
     def find_cm_d(alpha):
-        return math.sin(math.radians(alpha))/math.sin(math.radians(10)) * (Cm_10 - Cm_0) + Cm_0
-    
-    def find_Cm_alpha(y,alpha):
-        Cm_func_0 = interpolate(load_file(file_names[0])[0],load_file(file_names[0])[1],load_file(file_names[0])[2],load_file(file_names[0])[3])[2]
-        Cm_func_10 = interpolate(load_file(file_names[1])[0],load_file(file_names[1])[1],load_file(file_names[1])[2],load_file(file_names[1])[3])[2]
+        return math.sin(math.radians(alpha)) / math.sin(math.radians(10)) * (Cm_10 - Cm_0) + Cm_0
+
+    def find_Cm_alpha(y, alpha):
+        Cm_func_0 = interpolate(load_file(file_names[0])[0], load_file(file_names[0])[1], load_file(file_names[0])[2],
+                                load_file(file_names[0])[3])[2]
+        Cm_func_10 = interpolate(load_file(file_names[1])[0], load_file(file_names[1])[1], load_file(file_names[1])[2],
+                                 load_file(file_names[1])[3])[2]
         return Cm_func_0(y) + ((find_cm_d(alpha) - Cm_0) / (Cm_10 - Cm_0)) * (Cm_func_10(y) - Cm_func_0(y))
 
     def find_cd_d(alpha):
-        return Cd_0 + ((Cd_10-Cd_0)/(cL_10**2 - cL_0**2) * (find_cl_d(alpha)**2 - cL_0**2))
+        return Cd_0 + ((Cd_10 - Cd_0) / (cL_10 ** 2 - cL_0 ** 2) * (find_cl_d(alpha) ** 2 - cL_0 ** 2))
 
+    def find_Cd_alpha(y, alpha):
+        Cd_func_0 = interpolate(load_file(file_names[0])[0], load_file(file_names[0])[1], load_file(file_names[0])[2],
+                                load_file(file_names[0])[3])[1]
+        Cd_func_10 = interpolate(load_file(file_names[1])[0], load_file(file_names[1])[1], load_file(file_names[1])[2],
+                                 load_file(file_names[1])[3])[1]
+        return Cd_func_0(y) + ((Cd_func_10(y) - Cd_func_0(y)) / (Cd_10 - Cd_0)) * (find_cd_d(alpha) - Cd_0)
 
-    def find_Cd_alpha(y,alpha):
-        Cd_func_0 = interpolate(load_file(file_names[0])[0],load_file(file_names[0])[1],load_file(file_names[0])[2],load_file(file_names[0])[3])[1]
-        Cd_func_10 = interpolate(load_file(file_names[1])[0],load_file(file_names[1])[1],load_file(file_names[1])[2],load_file(file_names[1])[3])[1]
-        return Cd_func_0(y) + ((Cd_func_10(y)-Cd_func_0(y))/(Cd_10 - Cd_0)) * (find_cd_d(alpha) - Cd_0)
-
-
-
-
-    aerodynamic_output = L_prime_func(x, find_Cl_alpha(x, alpha)) #edit angle of attack 
+    aerodynamic_output = L_prime_func(x, find_Cl_alpha(x, alpha))  # edit angle of attack
     torque_output = M_prime_func(x, find_Cm_alpha(x, alpha))
-    drag_output = D_prime_func(x,find_Cd_alpha(x,alpha))
+    drag_output = D_prime_func(x, find_Cd_alpha(x, alpha))
 
-
-    return aerodynamic_output,torque_output,drag_output
+    return aerodynamic_output, torque_output, drag_output
 
 
 def get_inertial(point):
@@ -150,13 +147,14 @@ def get_moment(distribution, limit):
 def get_reaction_moment(distribution, span):
     reaction_moment, moment_error = sp.integrate.quad(distribution, 0, span)
     return reaction_moment
+
+
 def get_reaction_force(distribution, span):
     reactio_force, moment_error = sp.integrate.quad(distribution, 0, span)
     return reactio_force
 
 
 def get_integrated_idiot():
-
     values_shear = []
     values_moment = []
     combined_load_distribution = sp.interpolate.interp1d(span, combined_load(span), kind='quadratic',
@@ -173,9 +171,9 @@ def get_integrated_idiot():
     # 40 - 50
     for i in span[40:50]:
         values_shear.append(get_shear(combined_load_distribution, i))
-    get_reaction_force(combined_load_distribution,span[-1])
-    
-    new_values_shear = [i * -1 + get_reaction_force(combined_load_distribution,span[-1]) for i in values_shear]
+    get_reaction_force(combined_load_distribution, span[-1])
+
+    new_values_shear = [i * -1 + get_reaction_force(combined_load_distribution, span[-1]) for i in values_shear]
     shear_function = sp.interpolate.interp1d(span, new_values_shear, kind='quadratic', fill_value='extrapolate')
     for i in span[:16]:
         values_moment.append(get_moment(shear_function, i))
@@ -189,7 +187,7 @@ def get_integrated_idiot():
     for i in span[40:50]:
         values_moment.append(get_moment(shear_function, i))
 
-    new_values_moment = [i - get_reaction_moment(shear_function,span[-1]) for i in values_moment]
+    new_values_moment = [i - get_reaction_moment(shear_function, span[-1]) for i in values_moment]
     return new_values_shear, new_values_moment
 
 
@@ -213,15 +211,12 @@ def engine_torque():
     a = 0
     for i in span:
         if i in pylon:
-            values[a] = trust*pylon_lenght
+            values[a] = trust * pylon_lenght
             a += 1
         else:
             values[a] = 0
             a += 1
     return values
-
-
-
 
 
 def get_stiffness():
@@ -282,21 +277,22 @@ def get_stiffness():
         string_bot = np.full(n, value)
         return string_bot
 
-
     # Stiffness
     def I_xx(y):
         w = width * chord(y)
         h = spar_height * chord(y)
-        I = S_stringers * (h / 2) ** 2 * (stringers_top(span, 4) + stringers_bottom(span, 4)) + 1 / 12 * t2 * h ** 3 + 2 * w * t1 * (
+        I = S_stringers * (h / 2) ** 2 * (
+                    stringers_top(span, 4) + stringers_bottom(span, 4)) + 1 / 12 * t2 * h ** 3 + 2 * w * t1 * (
                     h / 2) ** 2
         return (I)
 
     def J_z(y):
         w = width * chord(y)
         h = spar_height * chord(y)
-        J = S_stringers * ((chord(y)) ** 2 * (stringers_top(span, 4) ** 2 + stringers_bottom(span, 4) ** 2)) + 2 * w * t1 * (
+        J = S_stringers * (
+                    (chord(y)) ** 2 * (stringers_top(span, 4) ** 2 + stringers_bottom(span, 4) ** 2)) + 2 * w * t1 * (
                     w ** 2 + t1 ** 2) / 12 + 2 * h * t2 * (h ** 2 + t2 ** 2) / 12 + 2 * w * t1 * (
-                        h / 2) ** 2 + 2 * h * t2 * (w / 2) ** 2
+                    h / 2) ** 2 + 2 * h * t2 * (w / 2) ** 2
         return J
 
     # Intigrals
@@ -364,24 +360,18 @@ def get_stiffness():
         Angle.append(estimate2 * 180/math.pi)
         """
 
-
-
     # wingbox validity and weight
     V_total = 2 * t1 * (chord(0) + chord(span_elliot / 2)) / 2 * width * span_elliot / 2 + 2 * t2 * (
-                chord(0) + chord(span_elliot / 2)) / 2 * spar_height * span_elliot / 2
+            chord(0) + chord(span_elliot / 2)) / 2 * spar_height * span_elliot / 2
     l = 0
     for i in range(int((len(Stringer_change) - 1))):
         l = l + 1
         V_total = V_total + (stringers_bottom(span, 4) + stringers_top(span, 4)) * (
-                    Stringer_change[i + 1] - Stringer_change[i]) * S_stringers
-    V_total = V_total + (stringers_top(span, 4) + stringers_bottom(span, 4)) * (span_elliot/ 2 - Stringer_change[-1]) * S_stringers
+                Stringer_change[i + 1] - Stringer_change[i]) * S_stringers
+    V_total = V_total + (stringers_top(span, 4) + stringers_bottom(span, 4)) * (
+                span_elliot / 2 - Stringer_change[-1]) * S_stringers
 
-   # estimate1, error1 = sp.integrate.quad(intigral(span), 0, (span_elliot / 2))
-    #estimate2, error2 = sp.integrate.quad(theta, 0, span_elliot / 2)
-    #print("the deflection is between", nsafety * nmax * estimate1, "and", nsafety * nmin * estimate1, "m")
-    #print("the twist angle is between", nsafety * nmax * estimate2 * 180 / math.pi, "and",
-          #nsafety * nmin * estimate2 * 180 / math.pi, "°")
-    #print("The weight is ", 2 * V_total * rho, "kg")
+
 
     return J_z(span)
 
@@ -392,7 +382,7 @@ def combined_load(x):
 
 
 def combined_torque(x):
-    combined_torque = q_scale *get_aerodynamic(x)[1]-engine_torque()
+    combined_torque = q_scale * get_aerodynamic(x)[1] - engine_torque()
     return combined_torque
 
 
@@ -403,13 +393,12 @@ def get_twist(x):
     J_z = get_stiffness()
     area = get_inertial(span)[1][0]
     height = get_inertial(span)[1][1]
-    print(height)
     length = get_inertial(span)[1][2]
     d_theta = []
+
     def get_integral(func, lim):
         integral, err_tw = sp.integrate.quad(func, 0, lim)
         return integral
-
 
     for i in range(0, 50):
         val = (torque_function[i] / (4 * (area[i] ** 2) * G)) * (2 * (length[i] + height[i]) / thickness)
@@ -430,6 +419,7 @@ def get_twist(x):
         twist_values.append(get_integral(d_theta_function, i))
 
     return twist_values
+
 
 # plotting the graphs
 fig, axs = plt.subplots(3, 2)

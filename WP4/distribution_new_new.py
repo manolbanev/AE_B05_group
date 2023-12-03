@@ -4,6 +4,4 @@ import scipy as sp
 import math
 from scipy import integrate
 
-
-n = [0]
-s =[4]
+class
