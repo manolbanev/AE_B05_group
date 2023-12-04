@@ -280,10 +280,7 @@ def get_stiffness():
     def J_z(y):
         w = width * chord(y)
         h = spar_height * chord(y)
-        J = S_stringers * (
-                    (chord(y)) ** 2 * (d(stringertop) + d(stringerbot))  ) + 2 * w * t1 * (
-                    w ** 2 + t1 ** 2) / 12 + 2 * h * t2 * (h ** 2 + t2 ** 2) / 12 + 2 * w * t1 * (
-                    h / 2) ** 2 + 2 * h * t2 * (w / 2) ** 2
+        J = S_stringers * ((chord(y)) ** 2 * (d(stringertop) + d(stringerbot))  ) + 4 * (w * h)**2 / ((2 * w / t1) + (2 * h / t2))
         return J
 
     # Intigrals
@@ -344,11 +341,11 @@ def get_stiffness():
     x = span
     axs[0, 0].plot(x, J_z(x), color='red')
     axs[0, 0].set_title('Torsional Stiffness')
-    axs[0, 0].set_xlabel('Spanwise length')
+    axs[0, 0].set_xlabel('Spanwise location [m]')
     axs[0, 0].set_ylabel('Polar Moment of inertia [m^4]')
     axs[1, 0].plot(x, I_xx(x), color='lime')
     axs[1, 0].set_title('Bending Stiffness')
-    axs[1, 0].set_xlabel('Spanwise length')
+    axs[1, 0].set_xlabel('Spanwise location [m]')
     axs[1, 0].set_ylabel('Area Moment of inertia [m^4]')
     axs[-1, -1].axis('off')
     plt.show()
@@ -383,7 +380,7 @@ def get_twist(x):
         return integral
 
     for i in range(0, 50):
-        val = (torque_function[i] / (4 * (area[i] ** 2) * G)) * (2 * (length[i] + height[i]) / thickness)
+        val = (torque_function[i] / (J_z[i] * G))
         d_theta.append(val)
 
     d_theta_function = sp.interpolate.interp1d(span, d_theta, kind='quadratic', fill_value='extrapolate')
@@ -426,7 +423,7 @@ result2 = get_stiffness()
 print(2.729 * 1.5 * result1[-1] * 180/math.pi, "°")
 print(2.729 * 1.5 * result2[1][-1], "m")
 print(result2[2], "kg")
-'''
+#'''
 load_case_1 = 2.729 * 1.5
 load_case_2 = -1.5
 fig, axs = plt.subplots(2, 2)
@@ -434,19 +431,19 @@ plt.tight_layout()
 x = span
 axs[0, 0].plot(x, np.multiply(get_twist(x),load_case_1 * 180/math.pi), color='red')
 axs[0, 0].set_title('Twist Angle')
-axs[0, 0].set_xlabel('Spanwise length')
+axs[0, 0].set_xlabel('Spanwise location [m]')
 axs[0, 0].set_ylabel('Twist Angle [°]')
 axs[1, 0].plot(x, np.multiply(get_twist(x),load_case_2 * 180/math.pi), color='red')
 axs[1, 0].set_title('Twist Angle')
-axs[1, 0].set_xlabel('Spanwise length')
+axs[1, 0].set_xlabel('Spanwise location [m]')
 axs[1, 0].set_ylabel('Twist Angle [°]')
 axs[0, 1].plot(x, np.multiply(get_stiffness()[1],load_case_1), color='lime')
 axs[0, 1].set_title('Deflection')
-axs[0, 1].set_xlabel('Spanwise length')
+axs[0, 1].set_xlabel('Spanwise location [m]')
 axs[0, 1].set_ylabel('Deflection [m]')
 axs[1, 1].plot(x, np.multiply(get_stiffness()[1],load_case_2), color='lime')
 axs[1, 1].set_title('Deflection')
-axs[1, 1].set_xlabel('Spanwise length')
+axs[1, 1].set_xlabel('Spanwise location [m]')
 axs[1, 1].set_ylabel('Deflection [m]')
 plt.show()
-'''
+#'''
