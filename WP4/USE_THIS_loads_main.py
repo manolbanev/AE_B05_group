@@ -11,16 +11,16 @@ span = np.linspace(0, wing_length, n_step)
 pylon = span[int(0.32 * n_step):int(0.36 * n_step)]
 engine_load = np.zeros_like(span)
 engine_torques = np.zeros_like(span)
-q_scale = 625
+q_scale = 1
 G = 26 * 10 ** 9
-q = 61.25
+q = 14563.8
 cL_0 = 0.149649
 cL_10 = 0.907325
 Cm_0 = -0.24373
 Cm_10 = -1.17556
 Cd_0 = 0.001000
 Cd_10 = 0.036043
-alpha = 0
+alpha = float(input('Angle of attack: '))
 c_root = 10.10
 c_tip = 2.73
 spar_height = 0.0942
@@ -35,6 +35,8 @@ t1 = 0.001
 t2 = 0.001
 stringertop = 4
 stringerbot = 4
+ultimate_positive = 4.095
+ultimate_negative = -1.5
 
 
 # obtain aerodynamic loads distributions
@@ -328,7 +330,7 @@ def get_stiffness():
 
 
 def combined_load(dist):  # get combined load distribution
-    combined = q_scale * get_aerodynamic(dist)[0] - get_inertial(dist)[0] - engine_weight()
+    combined = ultimate_negative * q_scale * get_aerodynamic(dist)[0] - get_inertial(dist)[0] - engine_weight()
     return combined
 
 
