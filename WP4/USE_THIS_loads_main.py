@@ -6,15 +6,14 @@ from scipy import integrate
 
 # constants
 n_step = 50
-span = np.linspace(0, 22.445, n_step)
+wing_length = 22.445
+span = np.linspace(0, wing_length, n_step)
 pylon = span[int(0.32 * n_step):int(0.36 * n_step)]
 engine_load = np.zeros_like(span)
 engine_torques = np.zeros_like(span)
 q_scale = 625
 G = 26 * 10 ** 9
 q = 61.25
-c_y = [10.10, 2.73]
-y = [0, 22.445]
 cL_0 = 0.149649
 cL_10 = 0.907325
 Cm_0 = -0.24373
@@ -24,25 +23,23 @@ Cd_10 = 0.036043
 alpha = 0
 c_root = 10.10
 c_tip = 2.73
-spar_height = 0.0942  # m
-width = 0.5  # m
-span_elliot = 44.89  # m
-E = 68.9 * 10 ** 9  # m
+spar_height = 0.0942
+width = 0.5
+E = 68.9 * 10 ** 9
 rho = 2700
 nmax = 2.729
 nmin = -1
 nsafety = 1.5
-S_stringers = 0.0016  # m^2
-t1 = 0.001  # m
-t2 = 0.001  # m
+S_stringers = 0.0016
+t1 = 0.001
+t2 = 0.001
 stringertop = 4
 stringerbot = 4
 
 
-
 # obtain aerodynamic loads distributions
 def get_aerodynamic(x):
-    c_y_func = sp.interpolate.interp1d(y, c_y, kind='linear', fill_value="extrapolate")
+    c_y_func = sp.interpolate.interp1d([0, wing_length], [c_root, c_tip], kind='linear', fill_value="extrapolate")
     file_names = ['MainWing_a=0.00_v=10.00ms.txt', 'MainWing_a=10.00_v=10.00ms.txt']
     def load_file(filename): # read aerodynamic data from file
         data = []
@@ -231,7 +228,7 @@ def engine_torque():
 # get wingbox stiffness and deflection
 def get_stiffness():
     def chord(a):
-        c = c_root - (c_root - c_tip) * 2 * a / span_elliot
+        c = c_root - (c_root - c_tip) * 2 * a / 2 * wing_length
         return (c)
 
     def d(n):
@@ -323,9 +320,9 @@ def get_stiffness():
         return values_deflection_actual
 
     # wingbox validity and weight
-    V_total = 2 * t1 * (chord(0) + chord(span_elliot / 2)) / 2 * width * span_elliot / 2 + 2 * t2 * (
-            chord(0) + chord(span_elliot / 2)) / 2 * spar_height * span_elliot / 2 + (
-                          stringertop + stringerbot) * span_elliot / 2 * S_stringers
+    V_total = 2 * t1 * (chord(0) + chord(2 * wing_length / 2)) / 2 * width * 2 * wing_length / 2 + 2 * t2 * (
+            chord(0) + chord(2 * wing_length / 2)) / 2 * spar_height * 2 * wing_length / 2 + (
+                          stringertop + stringerbot) * 2 * wing_length / 2 * S_stringers
     mass = V_total * 2 * rho
     return J_z(span), get_deflection(), mass
 
