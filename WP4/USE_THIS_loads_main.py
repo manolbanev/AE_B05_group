@@ -5,6 +5,7 @@ import math
 from scipy import integrate
 
 # constants
+sweep_angle = 40.04
 n_step = 50
 wing_length = 22.445
 span = np.linspace(0, wing_length, n_step)
@@ -13,7 +14,14 @@ engine_load = np.zeros_like(span)
 engine_torques = np.zeros_like(span)
 q_scale = 1
 G = 26 * 10 ** 9
-q = 2092.55
+density = 1.225
+velocity = 58 * math.cos(math.radians(sweep_angle))
+gamma = 1.4
+R = 287
+T = 288.15
+sound = np.sqrt(T*R*gamma)
+Mach  = velocity/sound
+q = 0.5*velocity**2*density
 cL_0 = 0.149649
 cL_10 = 0.907325
 Cm_0 = -0.24373
@@ -37,6 +45,10 @@ stringertop = 4
 stringerbot = 4
 ultimate_positive = -1.5
 HLD = True
+
+
+def Prandtl(x):
+    return x / np.sqrt(1-Mach**2)
 
 
 # obtain aerodynamic loads distributions
