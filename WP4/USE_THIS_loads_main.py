@@ -13,7 +13,7 @@ engine_load = np.zeros_like(span)
 engine_torques = np.zeros_like(span)
 q_scale = 1
 G = 26 * 10 ** 9
-q = 14563.8
+q = 2092.55
 cL_0 = 0.149649
 cL_10 = 0.907325
 Cm_0 = -0.24373
@@ -25,18 +25,18 @@ c_root = 10.10
 c_tip = 2.73
 spar_height = 0.0942
 width = 0.5
-E = 68.9 * 10 ** 9
+E = 68.9 * (10 ** 9)
 rho = 2700
-nmax = 2.729
-nmin = -1
+nmax = 1
+nmin = 1
 nsafety = 1.5
 S_stringers = 0.0016
 t1 = 0.001
 t2 = 0.001
 stringertop = 4
 stringerbot = 4
-ultimate_positive = 4.095
-ultimate_negative = -1.5
+ultimate_positive = -1.5
+HLD = True
 
 
 # obtain aerodynamic loads distributions
@@ -61,12 +61,23 @@ def get_aerodynamic(x):
             Cllst.append(data[3][positive_indeces[n]])
             Cdlst.append(data[4][positive_indeces[n]])
             Cmlst.append(data[5][positive_indeces[n]])
-        return Cllst, Cdlst, Cmlst, ylst
+        return Cllst, Cdlst, Cmlst, ylst,
 
     def interpolate(Cllst, Cdlst, Cmlst, ylst): # interpolate aerodynamic data to obtain a function
         Cl_func = sp.interpolate.interp1d(ylst, Cllst, kind='cubic', fill_value='extrapolate')
         Cd_func = sp.interpolate.interp1d(ylst, Cdlst, kind='cubic', fill_value='extrapolate')
         Cm_func = sp.interpolate.interp1d(ylst, Cmlst, kind='cubic', fill_value='extrapolate')
+        a = 1.85
+        b = 15
+        if HLD:
+            CL_new = []
+            for i in span:
+                if i<=b and i>=a:
+                    CL_new.append(float(Cl_func(i))*1.9)
+                else:
+                    CL_new.append(float(Cl_func(i)))
+            Cl_func = sp.interpolate.interp1d(span, CL_new, kind='cubic', fill_value='extrapolate')
+            return Cl_func, Cd_func, Cm_func
         return Cl_func, Cd_func, Cm_func
 
     # aerodynamic load distributions
@@ -265,7 +276,7 @@ def get_stiffness():
                 stringers_top(span, stringertop) + stringers_bottom(span,
                                                                     stringerbot)) + 1 / 12 * t2 * h ** 3 + 2 * w * t1 * (
                     h / 2) ** 2
-        return (I)
+        return I
 
     def J_z(y):
         w = width * chord(y)
@@ -330,7 +341,7 @@ def get_stiffness():
 
 
 def combined_load(dist):  # get combined load distribution
-    combined = ultimate_negative * q_scale * get_aerodynamic(dist)[0] - get_inertial(dist)[0] - engine_weight()
+    combined = ultimate_positive * q_scale * get_aerodynamic(dist)[0] - get_inertial(dist)[0] - engine_weight()
     return combined
 
 
@@ -372,6 +383,7 @@ def get_twist(dist):
     return twist_values
 
 
+
 # plotting loads distribution, shear, moment, torque and twist angle
 fig, axs = plt.subplots(3, 2)
 plt.tight_layout()
@@ -408,6 +420,7 @@ print(result2[2], "kg")
 load_case_1 = 2.729 * 1.5
 load_case_2 = -1.5
 
+
 # plotting twist angle and deflection for load cases
 fig, axs = plt.subplots(2, 2)
 plt.tight_layout()
@@ -429,3 +442,5 @@ axs[1, 1].set_title('Deflection')
 axs[1, 1].set_xlabel('Spanwise location [m]')
 axs[1, 1].set_ylabel('Deflection [m]')
 plt.show()
+
+
