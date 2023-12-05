@@ -6,8 +6,8 @@ from scipy import integrate
 
 
 # constants
-span = np.linspace(0, 22.445, 50)
-pylon = span[16:18]
+span = np.linspace(0, 22.445, 100)
+pylon = span[32:36]
 q_scale = 625
 G = 26 * 10 ** 9
 
@@ -121,8 +121,8 @@ def get_inertial(point):
         return 0.95 * height * length, height, length
 
     def Wfps(x):
-        W_fperspan = (9.81 * A(x)[0] * 800)[:40]
-        W_fperspan = np.concatenate((W_fperspan, np.zeros(10)))
+        W_fperspan = (9.81 * A(x)[0] * 800)[:80]
+        W_fperspan = np.concatenate((W_fperspan, np.zeros(20)))
         return W_fperspan
 
     def WW(x):
@@ -160,31 +160,31 @@ def get_integrated_idiot():
     combined_load_distribution = sp.interpolate.interp1d(span, combined_load(span), kind='quadratic',
                                                          fill_value='extrapolate')
     # 0 - 16
-    for i in span[:16]:
+    for i in span[:32]:
         values_shear.append(get_shear(combined_load_distribution, i))
     # 16 - 18
-    for i in span[16:18]:
+    for i in span[32:36]:
         values_shear.append(get_shear(combined_load_distribution, i))
     # 18 - 40
-    for i in span[18:40]:
+    for i in span[36:80]:
         values_shear.append(get_shear(combined_load_distribution, i))
     # 40 - 50
-    for i in span[40:50]:
+    for i in span[80:100]:
         values_shear.append(get_shear(combined_load_distribution, i))
     get_reaction_force(combined_load_distribution, span[-1])
 
     new_values_shear = [i * -1 + get_reaction_force(combined_load_distribution, span[-1]) for i in values_shear]
     shear_function = sp.interpolate.interp1d(span, new_values_shear, kind='quadratic', fill_value='extrapolate')
-    for i in span[:16]:
+    for i in span[:32]:
         values_moment.append(get_moment(shear_function, i))
         # 16 - 18
-    for i in span[16:18]:
+    for i in span[32:36]:
         values_moment.append(get_moment(shear_function, i))
         # 18 - 40
-    for i in span[18:40]:
+    for i in span[36:80]:
         values_moment.append(get_moment(shear_function, i))
         # 40 - 50
-    for i in span[40:50]:
+    for i in span[80:100]:
         values_moment.append(get_moment(shear_function, i))
 
     new_values_moment = [i - get_reaction_moment(shear_function, span[-1]) for i in values_moment]
@@ -313,30 +313,30 @@ def get_stiffness():
         values_deflection_actual = []
         deflection_function = sp.interpolate.interp1d(span, v(span), kind='quadratic', fill_value='extrapolate')
         # 0 - 16
-        for i in span[:16]:
+        for i in span[:32]:
             values_deflection.append(intigral(deflection_function, i))
         # 16 - 18
-        for i in span[16:18]:
+        for i in span[32:36]:
             values_deflection.append(intigral(deflection_function, i))
         # 18 - 40
-        for i in span[18:40]:
+        for i in span[36:80]:
             values_deflection.append(intigral(deflection_function, i))
         # 40 - 50
-        for i in span[40:50]:
+        for i in span[80:100]:
             values_deflection.append(intigral(deflection_function, i))
 
         deflection_prime = sp.interpolate.interp1d(span, values_deflection, kind='quadratic', fill_value='extrapolate')
         # 0 - 16
-        for i in span[:16]:
+        for i in span[:32]:
             values_deflection_actual.append(intigral(deflection_prime, i))
         # 16 - 18
-        for i in span[16:18]:
+        for i in span[32:36]:
             values_deflection_actual.append(intigral(deflection_prime, i))
         # 18 - 40
-        for i in span[18:40]:
+        for i in span[36:80]:
             values_deflection_actual.append(intigral(deflection_prime, i))
         # 40 - 50
-        for i in span[40:50]:
+        for i in span[80:100]:
             values_deflection_actual.append(intigral(deflection_prime, i))
 
         return values_deflection_actual
@@ -400,22 +400,22 @@ def get_twist(x):
         integral, err_tw = sp.integrate.quad(func, 0, lim)
         return integral
 
-    for i in range(0, 50):
+    for i in range(0, 100):
         val = (torque_function[i] / (4 * (area[i] ** 2) * G)) * (2 * (length[i] + height[i]) / thickness)
         d_theta.append(val)
 
     d_theta_function = sp.interpolate.interp1d(span, d_theta, kind='quadratic', fill_value='extrapolate')
 
-    for i in span[:16]:
+    for i in span[:32]:
         twist_values.append(get_integral(d_theta_function, i))
     # 16 - 18
-    for i in span[16:18]:
+    for i in span[32:36]:
         twist_values.append(get_integral(d_theta_function, i))
     # 18 - 40
-    for i in span[18:40]:
+    for i in span[36:80]:
         twist_values.append(get_integral(d_theta_function, i))
     # 40 - 50
-    for i in span[40:50]:
+    for i in span[80:100]:
         twist_values.append(get_integral(d_theta_function, i))
 
     return twist_values
