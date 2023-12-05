@@ -4,34 +4,30 @@ import scipy as sp
 import math
 from scipy import integrate
 
-
 # constants
-span = np.linspace(0, 22.445, 100)
-pylon = span[32:36]
+n_step = 50
+span = np.linspace(0, 22.445, n_step)
+pylon = span[int(0.32 * n_step):int(0.36 * n_step)]
 q_scale = 625
 G = 26 * 10 ** 9
+q = 61.25
+c_y = [10.10, 2.73]
+y = [0, 22.445]
+cL_0 = 0.149649
+cL_10 = 0.907325
+Cm_0 = -0.24373
+Cm_10 = -1.17556
+Cd_0 = 0.001000
+Cd_10 = 0.036043
+alpha = 0
 
 
 # obtaining aerodynamics load from simulations
 def get_aerodynamic(x):
-    # constants for obtaining aerodynamic load
-    q = 61.25
-    c_y = [9.84, 2.45]
-    y = [0, 22.445]
-    cL_0 = 0.149649
-    cL_10 = 0.907325
-    Cm_0 = -0.24373
-    Cm_10 = -1.17556
-    Cd_0 = 0.001000
-    Cd_10 = 0.036043
-    alpha = 0
-
     c_y_func = sp.interpolate.interp1d(y, c_y, kind='linear', fill_value="extrapolate")
-
     file_names = ['MainWing_a=0.00_v=10.00ms.txt', 'MainWing_a=10.00_v=10.00ms.txt']
-
     def load_file(filename):
-        data = []  # [y-span,chord,ai,cl,icd,cm]
+        data = []
         used_cols = [0, 1, 2, 3, 5, 7]
         positive_indeces = []
         for col in range(len(used_cols)):
@@ -121,8 +117,8 @@ def get_inertial(point):
         return 0.95 * height * length, height, length
 
     def Wfps(x):
-        W_fperspan = (9.81 * A(x)[0] * 800)[:80]
-        W_fperspan = np.concatenate((W_fperspan, np.zeros(20)))
+        W_fperspan = (9.81 * A(x)[0] * 800)[:int(0.8 * n_step)]
+        W_fperspan = np.concatenate((W_fperspan, np.zeros(int(0.2 * n_step))))
         return W_fperspan
 
     def WW(x):
@@ -160,36 +156,35 @@ def get_integrated_idiot():
     combined_load_distribution = sp.interpolate.interp1d(span, combined_load(span), kind='quadratic',
                                                          fill_value='extrapolate')
     # 0 - 16
-    for i in span[:32]:
+    for i in span[:int(0.32 * n_step)]:
         values_shear.append(get_shear(combined_load_distribution, i))
     # 16 - 18
-    for i in span[32:36]:
+    for i in span[int(0.32 * n_step):int(0.36 * n_step)]:
         values_shear.append(get_shear(combined_load_distribution, i))
     # 18 - 40
-    for i in span[36:80]:
+    for i in span[int(0.36 * n_step):int(0.8 * n_step)]:
         values_shear.append(get_shear(combined_load_distribution, i))
     # 40 - 50
-    for i in span[80:100]:
+    for i in span[int(0.8 * n_step):]:
         values_shear.append(get_shear(combined_load_distribution, i))
     get_reaction_force(combined_load_distribution, span[-1])
 
     new_values_shear = [i * -1 + get_reaction_force(combined_load_distribution, span[-1]) for i in values_shear]
     shear_function = sp.interpolate.interp1d(span, new_values_shear, kind='quadratic', fill_value='extrapolate')
-    for i in span[:32]:
+    for i in span[:int(0.32 * n_step)]:
         values_moment.append(get_moment(shear_function, i))
         # 16 - 18
-    for i in span[32:36]:
+    for i in span[int(0.32 * n_step):int(0.36 * n_step)]:
         values_moment.append(get_moment(shear_function, i))
         # 18 - 40
-    for i in span[36:80]:
+    for i in span[int(0.36 * n_step):int(0.8 * n_step)]:
         values_moment.append(get_moment(shear_function, i))
         # 40 - 50
-    for i in span[80:100]:
+    for i in span[int(0.8 * n_step):]:
         values_moment.append(get_moment(shear_function, i))
 
     new_values_moment = [i - get_reaction_moment(shear_function, span[-1]) for i in values_moment]
     return new_values_shear, new_values_moment
-
 
 def engine_weight():
     values = np.zeros_like(span)
@@ -232,40 +227,30 @@ def get_stiffness():
     nmin = -1
     nsafety = 1.5
     # Variables
-    N_stringers_top = [4]
-    N_stringers_bottom = [4]
-    Stringer_change = [0]
-    S_stringers = 0.001  # m^2
+    S_stringers = 0.0016  # m^2
     t1 = 0.001  # m
-    t2 = 0.002
+    t2 = 0.001  # m
+    stringertop = 4
+    stringerbot = 4
 
     # chord and distance
     def chord(a):
         c = c_root - (c_root - c_tip) * 2 * a / span_elliot
         return (c)
 
-    """""
-    def d(function):
+    def d(n):
         distance = 0
-        for i in span:
-            n = function
-            if n[i] == 1:
-                return (spar_height / 2)
-            elif n[i] % 2 == 0:
-                for k in range(int(n[i] / 2)):
-                    distance = distance + ((spar_height / 2) ** 2 + (width / 2 - width / n[i] * k) ** 2) ** 0.5
-                distance = 2 * distance
-            else:
-                for k in range(int((n - 1) / 2)):
-                    distance = distance + ((spar_height / 2) ** 2 + (width / 2 - width / n[i] * k) ** 2) ** 0.5
-                distance = distance * 2 + spar_height / 2
+        if n == 1:
+            return (spar_height / 2) ** 2
+        elif n % 2 == 0:
+            for k in range(int(n / 2)):
+                distance = distance + ((spar_height / 2) ** 2 + (width / 2 - width / n * k) ** 2)
+            distance = 2 * distance
+        else:
+            for k in range(int((n - 1) / 2)):
+                distance = distance + ((spar_height / 2) ** 2 + (width / 2 - width / n * k) ** 2)
+            distance = distance * 2 + (spar_height / 2) ** 2
         return distance
-
-    # Number of stringers :
-    nstringertop = sp.interpolate.interp1d(Stringer_change, N_stringers_top, kind="previous", fill_value="extrapolate")
-    nstringerbot = sp.interpolate.interp1d(Stringer_change, N_stringers_bottom, kind="previous",
-                                           fill_value="extrapolate")
-    """""
 
     def stringers_top(shape, value):
         n = shape.shape
@@ -282,17 +267,16 @@ def get_stiffness():
         w = width * chord(y)
         h = spar_height * chord(y)
         I = S_stringers * (h / 2) ** 2 * (
-                    stringers_top(span, 4) + stringers_bottom(span, 4)) + 1 / 12 * t2 * h ** 3 + 2 * w * t1 * (
+                stringers_top(span, stringertop) + stringers_bottom(span,
+                                                                    stringerbot)) + 1 / 12 * t2 * h ** 3 + 2 * w * t1 * (
                     h / 2) ** 2
         return (I)
 
     def J_z(y):
         w = width * chord(y)
         h = spar_height * chord(y)
-        J = S_stringers * (
-                    (chord(y)) ** 2 * (stringers_top(span, 4) ** 2 + stringers_bottom(span, 4) ** 2)) + 2 * w * t1 * (
-                    w ** 2 + t1 ** 2) / 12 + 2 * h * t2 * (h ** 2 + t2 ** 2) / 12 + 2 * w * t1 * (
-                    h / 2) ** 2 + 2 * h * t2 * (w / 2) ** 2
+        J = S_stringers * ((chord(y)) ** 2 * (d(stringertop) + d(stringerbot))) + 4 * (w * h) ** 2 / (
+                    (2 * w / t1) + (2 * h / t2))
         return J
 
     # Intigrals
@@ -313,67 +297,40 @@ def get_stiffness():
         values_deflection_actual = []
         deflection_function = sp.interpolate.interp1d(span, v(span), kind='quadratic', fill_value='extrapolate')
         # 0 - 16
-        for i in span[:32]:
+        for i in span[:int(0.32 * n_step)]:
             values_deflection.append(intigral(deflection_function, i))
         # 16 - 18
-        for i in span[32:36]:
+        for i in span[int(0.32 * n_step):int(0.36 * n_step)]:
             values_deflection.append(intigral(deflection_function, i))
         # 18 - 40
-        for i in span[36:80]:
+        for i in span[int(0.36 * n_step):int(0.8 * n_step)]:
             values_deflection.append(intigral(deflection_function, i))
         # 40 - 50
-        for i in span[80:100]:
+        for i in span[int(0.8 * n_step):]:
             values_deflection.append(intigral(deflection_function, i))
 
         deflection_prime = sp.interpolate.interp1d(span, values_deflection, kind='quadratic', fill_value='extrapolate')
         # 0 - 16
-        for i in span[:32]:
+        for i in span[:int(0.32 * n_step)]:
             values_deflection_actual.append(intigral(deflection_prime, i))
         # 16 - 18
-        for i in span[32:36]:
+        for i in span[int(0.32 * n_step):int(0.36 * n_step)]:
             values_deflection_actual.append(intigral(deflection_prime, i))
         # 18 - 40
-        for i in span[36:80]:
+        for i in span[int(0.36 * n_step):int(0.8 * n_step)]:
             values_deflection_actual.append(intigral(deflection_prime, i))
         # 40 - 50
-        for i in span[80:100]:
+        for i in span[int(0.8 * n_step):]:
             values_deflection_actual.append(intigral(deflection_prime, i))
 
         return values_deflection_actual
 
-    """
-    #plotting graph
-    x = [0]
-    I = [I_xx(0)]
-    J = [J_z(0)]
-    j = 0
-    Deflection = [0]
-    Angle = [0]
-    while x[-1] < span/2 :
-        j = j + 0.01
-        x.append(j)
-        I.append(I_xx(x[-1]))
-        J.append(J_z(x[-1]))
-        estimate1, error1 = sp.integrate.quad(intigral, 0, j)
-        estimate2, error2 = sp.integrate.quad(theta, 0, j)
-        Deflection.append(estimate1)
-        Angle.append(estimate2 * 180/math.pi)
-        """
-
     # wingbox validity and weight
     V_total = 2 * t1 * (chord(0) + chord(span_elliot / 2)) / 2 * width * span_elliot / 2 + 2 * t2 * (
-            chord(0) + chord(span_elliot / 2)) / 2 * spar_height * span_elliot / 2
-    l = 0
-    for i in range(int((len(Stringer_change) - 1))):
-        l = l + 1
-        V_total = V_total + (stringers_bottom(span, 4) + stringers_top(span, 4)) * (
-                Stringer_change[i + 1] - Stringer_change[i]) * S_stringers
-    V_total = V_total + (stringers_top(span, 4) + stringers_bottom(span, 4)) * (
-                span_elliot / 2 - Stringer_change[-1]) * S_stringers
-
-
-
-    return J_z(span)
+            chord(0) + chord(span_elliot / 2)) / 2 * spar_height * span_elliot / 2 + (
+                          stringertop + stringerbot) * span_elliot / 2 * S_stringers
+    mass = V_total * 2 * rho
+    return (J_z(span), get_deflection(), mass)
 
 
 def combined_load(x):
@@ -390,7 +347,7 @@ def get_twist(x):
     torque_function = combined_torque(x)
     twist_values = []
     thickness = 0.002
-    J_z = get_stiffness()
+    J_z = get_stiffness()[0]
     area = get_inertial(span)[1][0]
     height = get_inertial(span)[1][1]
     length = get_inertial(span)[1][2]
@@ -400,22 +357,22 @@ def get_twist(x):
         integral, err_tw = sp.integrate.quad(func, 0, lim)
         return integral
 
-    for i in range(0, 100):
-        val = (torque_function[i] / (4 * (area[i] ** 2) * G)) * (2 * (length[i] + height[i]) / thickness)
+    for i in range(0, n_step):
+        val = (torque_function[i] / (J_z[i] * G))
         d_theta.append(val)
 
     d_theta_function = sp.interpolate.interp1d(span, d_theta, kind='quadratic', fill_value='extrapolate')
 
-    for i in span[:32]:
+    for i in span[:int(0.32 * n_step)]:
         twist_values.append(get_integral(d_theta_function, i))
     # 16 - 18
-    for i in span[32:36]:
+    for i in span[int(0.32 * n_step):int(0.36 * n_step)]:
         twist_values.append(get_integral(d_theta_function, i))
     # 18 - 40
-    for i in span[36:80]:
+    for i in span[int(0.36 * n_step):int(0.8 * n_step)]:
         twist_values.append(get_integral(d_theta_function, i))
     # 40 - 50
-    for i in span[80:100]:
+    for i in span[int(0.8 * n_step):]:
         twist_values.append(get_integral(d_theta_function, i))
 
     return twist_values
@@ -426,17 +383,54 @@ fig, axs = plt.subplots(3, 2)
 plt.tight_layout()
 x = span
 axs[0, 0].plot(x, combined_load(x), color='red')
+axs[0, 0].set_xlabel('Spanwise location [m]')
+axs[0, 0].set_ylabel('Load distribution [N/m]')
 axs[0, 0].set_title('Load distribution')
 axs[1, 0].plot(x, get_integrated_idiot()[0], color='lime')
 axs[1, 0].set_title('Shear')
+axs[1, 0].set_xlabel('Spanwise location [m]')
+axs[1, 0].set_ylabel('Shear [N]')
 axs[2, 0].plot(x, get_integrated_idiot()[1], color='blue')
+axs[2, 0].set_xlabel('Spanwise location [m]')
+axs[2, 0].set_ylabel('Moment [Nm]')
 axs[2, 0].set_title('Moment')
 axs[0, 1].plot(x, combined_torque(x), color='cyan')
+axs[0, 1].set_xlabel('Spanwise location [m]')
+axs[0, 1].set_ylabel('Torque [Nm]')
 axs[0, 1].set_title('Torque')
 axs[1, 1].plot(x, get_twist(x), color='pink')
+axs[1, 1].set_xlabel('Spanwise location [m]')
+axs[1, 1].set_ylabel('Twist Angle [rad]')
 axs[1, 1].set_title('Twist Angle')
 axs[-1, -1].axis('off')
 plt.show()
 
+result1 = get_twist(span)
+result2 = get_stiffness()
 
+print(2.729 * 1.5 * result1[-1] * 180 / math.pi, "°")
+print(2.729 * 1.5 * result2[1][-1], "m")
+print(result2[2], "kg")
 
+load_case_1 = 2.729 * 1.5
+load_case_2 = -1.5
+fig, axs = plt.subplots(2, 2)
+plt.tight_layout()
+x = span
+axs[0, 0].plot(x, np.multiply(get_twist(x), load_case_1 * 180 / math.pi), color='red')
+axs[0, 0].set_title('Twist Angle')
+axs[0, 0].set_xlabel('Spanwise location [m]')
+axs[0, 0].set_ylabel('Twist Angle [°]')
+axs[1, 0].plot(x, np.multiply(get_twist(x), load_case_2 * 180 / math.pi), color='red')
+axs[1, 0].set_title('Twist Angle')
+axs[1, 0].set_xlabel('Spanwise location [m]')
+axs[1, 0].set_ylabel('Twist Angle [°]')
+axs[0, 1].plot(x, np.multiply(get_stiffness()[1], load_case_1), color='lime')
+axs[0, 1].set_title('Deflection')
+axs[0, 1].set_xlabel('Spanwise location [m]')
+axs[0, 1].set_ylabel('Deflection [m]')
+axs[1, 1].plot(x, np.multiply(get_stiffness()[1], load_case_2), color='lime')
+axs[1, 1].set_title('Deflection')
+axs[1, 1].set_xlabel('Spanwise location [m]')
+axs[1, 1].set_ylabel('Deflection [m]')
+plt.show()
