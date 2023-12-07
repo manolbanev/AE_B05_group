@@ -54,7 +54,7 @@ def Prandtl(x):
 # obtain aerodynamic loads distributions
 def get_aerodynamic(x):
     c_y_func = sp.interpolate.interp1d([0, wing_length], [c_root, c_tip], kind='linear', fill_value="extrapolate")
-    file_names = ['MainWing_a=0.00_v=10.00ms.txt', 'MainWing_a=10.00_v=10.00ms.txt']
+    file_names = ["WP5\MainWing_a=0.00_v=10.00ms.txt", "WP5\MainWing_a=10.00_v=10.00ms.txt"]
     def load_file(filename): # read aerodynamic data from file
         data = []
         used_cols = [0, 1, 2, 3, 5, 7]
@@ -396,63 +396,63 @@ def get_twist(dist):
 
 
 
-# plotting loads distribution, shear, moment, torque and twist angle
-fig, axs = plt.subplots(3, 2)
-plt.tight_layout()
-x = span
-axs[0, 0].plot(x, combined_load(x), color='red')
-axs[0, 0].set_xlabel('Spanwise location [m]')
-axs[0, 0].set_ylabel('Load distribution [N/m]')
-axs[0, 0].set_title('Load distribution')
-axs[1, 0].plot(x, get_integrated()[0], color='lime')
-axs[1, 0].set_title('Shear')
-axs[1, 0].set_xlabel('Spanwise location [m]')
-axs[1, 0].set_ylabel('Shear [N]')
-axs[2, 0].plot(x, get_integrated()[1], color='blue')
-axs[2, 0].set_xlabel('Spanwise location [m]')
-axs[2, 0].set_ylabel('Moment [Nm]')
-axs[2, 0].set_title('Moment')
-axs[0, 1].plot(x, combined_torque(x), color='cyan')
-axs[0, 1].set_xlabel('Spanwise location [m]')
-axs[0, 1].set_ylabel('Torque [Nm]')
-axs[0, 1].set_title('Torque')
-axs[1, 1].plot(x, get_twist(x), color='pink')
-axs[1, 1].set_xlabel('Spanwise location [m]')
-axs[1, 1].set_ylabel('Twist Angle [rad]')
-axs[1, 1].set_title('Twist Angle')
-axs[-1, -1].axis('off')
-plt.show()
+# # plotting loads distribution, shear, moment, torque and twist angle
+# fig, axs = plt.subplots(3, 2)
+# plt.tight_layout()
+# x = span
+# axs[0, 0].plot(x, combined_load(x), color='red')
+# axs[0, 0].set_xlabel('Spanwise location [m]')
+# axs[0, 0].set_ylabel('Load distribution [N/m]')
+# axs[0, 0].set_title('Load distribution')
+# axs[1, 0].plot(x, get_integrated()[0], color='lime')
+# axs[1, 0].set_title('Shear')
+# axs[1, 0].set_xlabel('Spanwise location [m]')
+# axs[1, 0].set_ylabel('Shear [N]')
+# axs[2, 0].plot(x, get_integrated()[1], color='blue')
+# axs[2, 0].set_xlabel('Spanwise location [m]')
+# axs[2, 0].set_ylabel('Moment [Nm]')
+# axs[2, 0].set_title('Moment')
+# axs[0, 1].plot(x, combined_torque(x), color='cyan')
+# axs[0, 1].set_xlabel('Spanwise location [m]')
+# axs[0, 1].set_ylabel('Torque [Nm]')
+# axs[0, 1].set_title('Torque')
+# axs[1, 1].plot(x, get_twist(x), color='pink')
+# axs[1, 1].set_xlabel('Spanwise location [m]')
+# axs[1, 1].set_ylabel('Twist Angle [rad]')
+# axs[1, 1].set_title('Twist Angle')
+# axs[-1, -1].axis('off')
+# plt.show()
 
-# obtaining maximum angle of twist, deflection and weight of the wingbox
-result1 = get_twist(span)
-result2 = get_stiffness()
-print(2.729 * 1.5 * result1[-1] * 180 / math.pi, "°")
-print(2.729 * 1.5 * result2[1][-1], "m")
-print(result2[2], "kg")
-load_case_1 = 2.729 * 1.5
-load_case_2 = -1.5
+# # obtaining maximum angle of twist, deflection and weight of the wingbox
+# result1 = get_twist(span)
+# result2 = get_stiffness()
+# print(2.729 * 1.5 * result1[-1] * 180 / math.pi, "°")
+# print(2.729 * 1.5 * result2[1][-1], "m")
+# print(result2[2], "kg")
+# load_case_1 = 2.729 * 1.5
+# load_case_2 = -1.5
 
 
-# plotting twist angle and deflection for load cases
-fig, axs = plt.subplots(2, 2)
-plt.tight_layout()
-x = span
-axs[0, 0].plot(x, np.multiply(get_twist(x), load_case_1 * 180 / math.pi), color='red')
-axs[0, 0].set_title('Twist Angle')
-axs[0, 0].set_xlabel('Spanwise location [m]')
-axs[0, 0].set_ylabel('Twist Angle [°]')
-axs[1, 0].plot(x, np.multiply(get_twist(x), load_case_2 * 180 / math.pi), color='red')
-axs[1, 0].set_title('Twist Angle')
-axs[1, 0].set_xlabel('Spanwise location [m]')
-axs[1, 0].set_ylabel('Twist Angle [°]')
-axs[0, 1].plot(x, np.multiply(get_stiffness()[1], load_case_1), color='lime')
-axs[0, 1].set_title('Deflection')
-axs[0, 1].set_xlabel('Spanwise location [m]')
-axs[0, 1].set_ylabel('Deflection [m]')
-axs[1, 1].plot(x, np.multiply(get_stiffness()[1], load_case_2), color='lime')
-axs[1, 1].set_title('Deflection')
-axs[1, 1].set_xlabel('Spanwise location [m]')
-axs[1, 1].set_ylabel('Deflection [m]')
-plt.show()
+# # plotting twist angle and deflection for load cases
+# fig, axs = plt.subplots(2, 2)
+# plt.tight_layout()
+# x = span
+# axs[0, 0].plot(x, np.multiply(get_twist(x), load_case_1 * 180 / math.pi), color='red')
+# axs[0, 0].set_title('Twist Angle')
+# axs[0, 0].set_xlabel('Spanwise location [m]')
+# axs[0, 0].set_ylabel('Twist Angle [°]')
+# axs[1, 0].plot(x, np.multiply(get_twist(x), load_case_2 * 180 / math.pi), color='red')
+# axs[1, 0].set_title('Twist Angle')
+# axs[1, 0].set_xlabel('Spanwise location [m]')
+# axs[1, 0].set_ylabel('Twist Angle [°]')
+# axs[0, 1].plot(x, np.multiply(get_stiffness()[1], load_case_1), color='lime')
+# axs[0, 1].set_title('Deflection')
+# axs[0, 1].set_xlabel('Spanwise location [m]')
+# axs[0, 1].set_ylabel('Deflection [m]')
+# axs[1, 1].plot(x, np.multiply(get_stiffness()[1], load_case_2), color='lime')
+# axs[1, 1].set_title('Deflection')
+# axs[1, 1].set_xlabel('Spanwise location [m]')
+# axs[1, 1].set_ylabel('Deflection [m]')
+# plt.show()
 
 
