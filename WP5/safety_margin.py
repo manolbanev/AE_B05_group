@@ -3,7 +3,7 @@ from WP4.USE_THIS_loads_main import combined_load
 import scipy as sp
 
 
-def get_shear(dist: np.array) -> sp.interpolate.interpolate.interp1d:
+def get_shear(dist: np.array) -> any:
     """
     This function returns the shear force as a function of distance from the root.
     :param dist: x-axis for the function
@@ -14,7 +14,7 @@ def get_shear(dist: np.array) -> sp.interpolate.interpolate.interp1d:
     return shear_func
 
 
-def calculate_margin(dist: np.array, load_func: any, failure_func: any) -> sp.interpolate.interpolate.interp1d:
+def calculate_margin(dist: np.array, load_func: any, failure_func: any) -> any:
     """
     This function returns the margin of safety as a function of distance from the root.
     :param dist: x-axis for the function
@@ -24,7 +24,7 @@ def calculate_margin(dist: np.array, load_func: any, failure_func: any) -> sp.in
     """
     margin_lst = []
     for i in dist:
-        margin_lst.append(load_func(i) /failure_func(i))
+        margin_lst.append(load_func(i) / failure_func(i))
     margin_func = sp.interpolate.interp1d(dist, margin_lst, kind='cubic', fill_value='extrapolate')
     return margin_func
 
