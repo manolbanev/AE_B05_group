@@ -394,7 +394,7 @@ def get_twist(dist):
 
     return twist_values
 
-
+"""""
 
 # plotting loads distribution, shear, moment, torque and twist angle
 fig, axs = plt.subplots(3, 2)
@@ -454,5 +454,4 @@ axs[1, 1].set_title('Deflection')
 axs[1, 1].set_xlabel('Spanwise location [m]')
 axs[1, 1].set_ylabel('Deflection [m]')
 plt.show()
-
-
+"""
