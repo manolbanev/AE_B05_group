@@ -42,7 +42,8 @@ stringer_height = 0.01
 stringer_width = 0.02
 stringer_thickness = 0.001
 S_stringers = (stringer_width + stringer_height) * stringer_thickness
-y_stringer = stringer_height**2 / (2 * S_stringers)
+y_stringer = stringer_height**2 * stringer_thickness / (2 * S_stringers)
+rib_amount = 5
 t1 = 0.001
 t2 = 0.001
 stringertop = 4
@@ -288,9 +289,9 @@ def get_stiffness():
     def I_xx(y):
         w = width * chord(y)
         h = spar_height * chord(y)
-        I = S_stringers * (h / 2 - y_stringer) ** 2 * (stringers_top(span, stringertop) + stringers_bottom(span,stringerbot)) + 1 / 12 * t2 * h ** 3 + 2 * w * t1 * (h / 2) ** 2 + (stringers_top(span, stringertop) + stringers_bottom(span,stringerbot)) * stringer_thickness * stringer_height**3 / 12
+        I = S_stringers * (h / 2 - y_stringer) ** 2 * (stringers_top(span, stringertop) + stringers_bottom(span,stringerbot)) + 2 * 1 / 12 * t2 * h ** 3 + 2 * w * t1 * (h / 2) ** 2 + (stringers_top(span, stringertop) + stringers_bottom(span,stringerbot)) * stringer_thickness * stringer_height**3 / 12
         return I
-
+    
     def J_z(y):
         w = width * chord(y)
         h = spar_height * chord(y)
@@ -394,50 +395,30 @@ def get_twist(dist):
     return twist_values
 
 def get_buckling() :
-    K = 4
-    I_xx = get_stiffness[3]
-    def I_stringer(y) :
-        I_stringer= stringer_thickness * stringer_height**3 / 12
-        return I_stringer
-    def stress(dist) :
+    K = 0.25
+    I_xx = get_stiffness()[3]
+    print(I_xx)
+    I_stringer= stringer_thickness * stringer_height**3 / 12
+    def stress() :
         sigma = []
+        a = 0
         for i in get_integrated()[1]:
-            a = 0
-            sigma.append((i * (spar_height * span[a] / 2 - y_stringer) ) / (I_xx[a]) * (stringertop+ stringerbot))
+            sigma.append(np.abs(i * (spar_height * (c_root - (c_root - c_tip) * span[a] / wing_length) / 2 - y_stringer) ) / (I_xx[a]))
             a += 1
         return sigma
-    def interrivet() : 
-        spacing = []
-        for i in I_stringer(span):
-            a = 0
-            spacing.append(((K * math.pi**2 * E * i)/(stress(span)[a] * S_stringers))**0.5)
-            a += 1
-        return spacing
-    def rivet_location() :
-        rivet = [0]
-        inter = interrivet()
-        crit_spacing = []
+    def Final() :
+        a = 0
+        true_stress = stress()
+        print(true_stress)
+        max_stress = []
         for i in span :
-            a = 0 
-            if inter[a] > (i - rivet[-1]) :
-                rivet.append(span[a-1])
-        if rivet[-1] != wing_length :
-            rivet.append(wing_length)
-        for i in span :
-            crit_spacing.append()
-        return crit_spacing
-    def critical() :
-        
-        crit_spacing = rivet_location()
-        critical = []
-        for i in I_stringer(span):
-            a = 0
-            critical.append((K * math.pi**2 * E * i)/(crit_spacing * S_stringers))
+            if true_stress[a] != 0 :
+                max_stress.append(np.abs((K * math.pi**2 * E * I_stringer) / ((wing_length / rib_amount)**2 * S_stringers))/ true_stress[a])
+            else : 
+                max_stress.append(max_stress[-1])
             a += 1
-
-
-
-    return 
+        return max_stress
+    return stress()
 
 '''
 # plotting loads distribution, shear, moment, torque and twist angle
@@ -467,7 +448,7 @@ axs[1, 1].set_title('Twist Angle')
 axs[-1, -1].axis('off')
 plt.show()
 '''
-
+'''
 # obtaining maximum angle of twist, deflection and weight of the wingbox
 print(get_stiffness()[2], "kg")
 
@@ -484,5 +465,9 @@ axs[1].set_title('Deflection')
 axs[1].set_xlabel('Spanwise location [m]')
 axs[1].set_ylabel('Deflection [m]')
 plt.show()
-
+'''
+x = span
+buckling = get_buckling()
+plt.plot(x, buckling)
+plt.show()
 
