@@ -490,3 +490,5 @@ buckling = get_buckling()
 plt.plot(x, buckling)
 plt.show()
 '''
+
+

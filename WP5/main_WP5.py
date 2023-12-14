@@ -24,4 +24,5 @@ def get_sigma():
     return sigma_list
 
 
+print(max(get_shear()))
 print(get_sigma())
