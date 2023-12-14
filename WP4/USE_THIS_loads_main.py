@@ -19,16 +19,15 @@ velocity = 58 * math.cos(math.radians(sweep_angle))
 gamma = 1.4
 R = 287
 T = 288.15
-sound = np.sqrt(T*R*gamma)
-Mach = velocity/sound
-q = 0.5*velocity**2*density
+sound = np.sqrt(T * R * gamma)
+Mach = velocity / sound
+q = 0.5 * velocity ** 2 * density
 cL_0 = 0.149649
 cL_10 = 0.907325
 Cm_0 = -0.24373
 Cm_10 = -1.17556
 Cd_0 = 0.001000
 Cd_10 = 0.036043
-alpha = float(input('Angle of attack: '))
 c_root = 10.10
 c_tip = 2.73
 spar_height = 0.0942
@@ -38,24 +37,31 @@ rho = 2700
 nmax = 1
 nmin = 1
 nsafety = 1.5
-S_stringers = 0.0016
+stringer_height = 0.01
+stringer_width = 0.02
+stringer_thickness = 0.001
+S_stringers = (stringer_width + stringer_height) * stringer_thickness
+y_stringer = stringer_height ** 2 * stringer_thickness / (2 * S_stringers)
+rib_amount = 5
 t1 = 0.001
 t2 = 0.001
 stringertop = 4
 stringerbot = 4
-ultimate_positive = -1.5
+ultimate_positive = 3
 HLD = True
+alpha = 14
 
 
 def Prandtl(x):
-    return x / np.sqrt(1-Mach**2)
+    return x / np.sqrt(1 - Mach ** 2)
 
 
 # obtain aerodynamic loads distributions
 def get_aerodynamic(x):
     c_y_func = sp.interpolate.interp1d([0, wing_length], [c_root, c_tip], kind='linear', fill_value="extrapolate")
     file_names = ['MainWing_a=0.00_v=10.00ms.txt', 'MainWing_a=10.00_v=10.00ms.txt']
-    def load_file(filename): # read aerodynamic data from file
+
+    def load_file(filename):  # read aerodynamic data from file
         data = []
         used_cols = [0, 1, 2, 3, 5, 7]
         positive_indeces = []
@@ -75,7 +81,7 @@ def get_aerodynamic(x):
             Cmlst.append(data[5][positive_indeces[n]])
         return Cllst, Cdlst, Cmlst, ylst,
 
-    def interpolate(Cllst, Cdlst, Cmlst, ylst): # interpolate aerodynamic data to obtain a function
+    def interpolate(Cllst, Cdlst, Cmlst, ylst):  # interpolate aerodynamic data to obtain a function
         Cl_func = sp.interpolate.interp1d(ylst, Cllst, kind='cubic', fill_value='extrapolate')
         Cd_func = sp.interpolate.interp1d(ylst, Cdlst, kind='cubic', fill_value='extrapolate')
         Cm_func = sp.interpolate.interp1d(ylst, Cmlst, kind='cubic', fill_value='extrapolate')
@@ -84,8 +90,8 @@ def get_aerodynamic(x):
         if HLD:
             CL_new = []
             for i in span:
-                if i<=b and i>=a:
-                    CL_new.append(float(Cl_func(i))*1.9)
+                if i <= b and i >= a:
+                    CL_new.append(float(Cl_func(i)) * 1.9)
                 else:
                     CL_new.append(float(Cl_func(i)))
             Cl_func = sp.interpolate.interp1d(span, CL_new, kind='cubic', fill_value='extrapolate')
@@ -102,12 +108,12 @@ def get_aerodynamic(x):
     def D_prime_func(y, Cd_func):
         return Cd_func * q * c_y_func(y)
 
-    def find_cl_d(alpha): # lift coefficient slope
+    def find_cl_d(alpha):  # lift coefficient slope
         coef = math.sin(math.radians(alpha)) / math.sin(math.radians(10))
         Cl_d = coef * (cL_10 - cL_0) + cL_0
         return Cl_d
 
-    def find_Cl_alpha(y, alpha): # lift coefficient vs angle of attack function
+    def find_Cl_alpha(y, alpha):  # lift coefficient vs angle of attack function
         Cl_d = find_cl_d(alpha)
         Cl_func_0 = interpolate(load_file(file_names[0])[0], load_file(file_names[0])[1], load_file(file_names[0])[2],
                                 load_file(file_names[0])[3])[0]
@@ -115,20 +121,20 @@ def get_aerodynamic(x):
                                  load_file(file_names[1])[3])[0]
         return Cl_func_0(y) + ((Cl_d - cL_0) / (cL_10 - cL_0)) * (Cl_func_10(y) - Cl_func_0(y))
 
-    def find_cm_d(alpha): # moment coefficient slope
+    def find_cm_d(alpha):  # moment coefficient slope
         return math.sin(math.radians(alpha)) / math.sin(math.radians(10)) * (Cm_10 - Cm_0) + Cm_0
 
-    def find_Cm_alpha(y, alpha): # moment coefficient vs angle of attack function
+    def find_Cm_alpha(y, alpha):  # moment coefficient vs angle of attack function
         Cm_func_0 = interpolate(load_file(file_names[0])[0], load_file(file_names[0])[1], load_file(file_names[0])[2],
                                 load_file(file_names[0])[3])[2]
         Cm_func_10 = interpolate(load_file(file_names[1])[0], load_file(file_names[1])[1], load_file(file_names[1])[2],
                                  load_file(file_names[1])[3])[2]
         return Cm_func_0(y) + ((find_cm_d(alpha) - Cm_0) / (Cm_10 - Cm_0)) * (Cm_func_10(y) - Cm_func_0(y))
 
-    def find_cd_d(alpha): # drag coefficient slope
+    def find_cd_d(alpha):  # drag coefficient slope
         return Cd_0 + ((Cd_10 - Cd_0) / (cL_10 ** 2 - cL_0 ** 2) * (find_cl_d(alpha) ** 2 - cL_0 ** 2))
 
-    def find_Cd_alpha(y, alpha): # drag coefficient vs angle of attack function
+    def find_Cd_alpha(y, alpha):  # drag coefficient vs angle of attack function
         Cd_func_0 = interpolate(load_file(file_names[0])[0], load_file(file_names[0])[1], load_file(file_names[0])[2],
                                 load_file(file_names[0])[3])[1]
         Cd_func_10 = interpolate(load_file(file_names[1])[0], load_file(file_names[1])[1], load_file(file_names[1])[2],
@@ -147,20 +153,21 @@ def get_inertial(point):
     def chord_distribution(x, c_root, c_tip, wingspan):
         return c_root - ((c_root - c_tip) / wingspan) * x
 
-    def A(x): # obtain area, height and length of the wingbox
+    def A(x):  # obtain area, height and length of the wingbox
         chord_at_x = chord_distribution(x, c_root, c_tip, wingspan=22.445)
         height = 0.0942 * chord_at_x
         length = 0.5 * chord_at_x
         return 0.95 * height * length, height, length
 
-    def Wfps(x): # obtain fuel per span
+    def Wfps(x):  # obtain fuel per span
         W_fperspan = (9.81 * A(x)[0] * 800)[:int(0.8 * n_step)]
         W_fperspan = np.concatenate((W_fperspan, np.zeros(int(0.2 * n_step))))
         return W_fperspan
 
-    def WW(x): # obtain wing weight per span
+    def WW(x):  # obtain wing weight per span
         WA = A(x)[0] * 9.81 * 173.7434
         return (WA)
+
     return WW(point) + Wfps(point), A(point)
 
 
@@ -188,7 +195,8 @@ def get_reaction_force(distribution, span):
 def get_integrated():
     values_shear = []
     values_moment = []
-    combined_load_distribution = sp.interpolate.interp1d(span, combined_load(span), kind='quadratic',fill_value='extrapolate')
+    combined_load_distribution = sp.interpolate.interp1d(span, combined_load(span), kind='quadratic',
+                                                         fill_value='extrapolate')
     # until pylon
     for i in span[:int(0.32 * n_step)]:
         values_shear.append(get_shear(combined_load_distribution, i))
@@ -253,7 +261,7 @@ def engine_torque():
 # get wingbox stiffness and deflection
 def get_stiffness():
     def chord(a):
-        c = c_root - (c_root - c_tip) * 2 * a / 2 * wing_length
+        c = c_root - (c_root - c_tip) * a / wing_length
         return (c)
 
     def d(n):
@@ -284,23 +292,23 @@ def get_stiffness():
     def I_xx(y):
         w = width * chord(y)
         h = spar_height * chord(y)
-        I = S_stringers * (h / 2) ** 2 * (
-                stringers_top(span, stringertop) + stringers_bottom(span,
-                                                                    stringerbot)) + 1 / 12 * t2 * h ** 3 + 2 * w * t1 * (
-                    h / 2) ** 2
+        I = S_stringers * (h / 2 - y_stringer) ** 2 * (stringers_top(span, stringertop) + stringers_bottom(span,
+                                                                                                           stringerbot)) + 2 * 1 / 12 * t2 * h ** 3 + 2 * w * t1 * (
+                        h / 2) ** 2 + (stringers_top(span, stringertop) + stringers_bottom(span,
+                                                                                           stringerbot)) * stringer_thickness * stringer_height ** 3 / 12
         return I
 
     def J_z(y):
         w = width * chord(y)
         h = spar_height * chord(y)
         J = S_stringers * ((chord(y)) ** 2 * (d(stringertop) + d(stringerbot))) + 4 * (w * h) ** 2 / (
-                    (2 * w / t1) + (2 * h / t2))
+                (2 * w / t1) + (2 * h / t2))
         return J
 
     def v(dist):  # get second derivative of deflection
         second = []
+        a = 0
         for i in get_integrated()[1]:
-            a = 0
             second.append((-1 * i) / (I_xx(dist)[a] * E))
             a += 1
         return second
@@ -345,11 +353,11 @@ def get_stiffness():
         return values_deflection_actual
 
     # wingbox validity and weight
-    V_total = 2 * t1 * (chord(0) + chord(2 * wing_length / 2)) / 2 * width * 2 * wing_length / 2 + 2 * t2 * (
-            chord(0) + chord(2 * wing_length / 2)) / 2 * spar_height * 2 * wing_length / 2 + (
-                          stringertop + stringerbot) * 2 * wing_length / 2 * S_stringers
+    V_total = ((chord(0) + chord(wing_length)) / 2) * (
+                2 * width * t1 + 2 * spar_height * t2) * wing_length + S_stringers * wing_length * (
+                          stringertop + stringerbot)
     mass = V_total * 2 * rho
-    return J_z(span), get_deflection(), mass
+    return J_z(span), get_deflection(), mass, I_xx(span)
 
 
 def combined_load(dist):  # get combined load distribution
@@ -394,8 +402,42 @@ def get_twist(dist):
 
     return twist_values
 
-"""""
 
+def get_buckling():
+    K = 0.25
+    I_xx = get_stiffness()[3]
+    print(I_xx)
+    I_stringer = stringer_thickness * stringer_height ** 3 / 12
+
+    def stress():
+        sigma = []
+        a = 0
+        for i in get_integrated()[1]:
+            sigma.append(
+                np.abs(i * (spar_height * (c_root - (c_root - c_tip) * span[a] / wing_length) / 2 - y_stringer)) / (
+                I_xx[a]))
+            a += 1
+        return sigma
+
+    def Final():
+        a = 0
+        true_stress = stress()
+        print(true_stress)
+        max_stress = []
+        for i in span:
+            if true_stress[a] != 0:
+                max_stress.append(
+                    np.abs((K * math.pi ** 2 * E * I_stringer) / ((wing_length / rib_amount) ** 2 * S_stringers)) /
+                    true_stress[a])
+            else:
+                max_stress.append(max_stress[-1])
+            a += 1
+        return max_stress
+
+    return stress()
+
+
+'''
 # plotting loads distribution, shear, moment, torque and twist angle
 fig, axs = plt.subplots(3, 2)
 plt.tight_layout()
@@ -422,36 +464,29 @@ axs[1, 1].set_ylabel('Twist Angle [rad]')
 axs[1, 1].set_title('Twist Angle')
 axs[-1, -1].axis('off')
 plt.show()
-
+'''
+'''
 # obtaining maximum angle of twist, deflection and weight of the wingbox
-result1 = get_twist(span)
-result2 = get_stiffness()
-print(2.729 * 1.5 * result1[-1] * 180 / math.pi, "°")
-print(2.729 * 1.5 * result2[1][-1], "m")
-print(result2[2], "kg")
-load_case_1 = 2.729 * 1.5
-load_case_2 = -1.5
-
+print(get_stiffness()[2], "kg")
 
 # plotting twist angle and deflection for load cases
-fig, axs = plt.subplots(2, 2)
+fig, axs = plt.subplots(2, 1)
 plt.tight_layout()
 x = span
-axs[0, 0].plot(x, np.multiply(get_twist(x), load_case_1 * 180 / math.pi), color='red')
-axs[0, 0].set_title('Twist Angle')
-axs[0, 0].set_xlabel('Spanwise location [m]')
-axs[0, 0].set_ylabel('Twist Angle [°]')
-axs[1, 0].plot(x, np.multiply(get_twist(x), load_case_2 * 180 / math.pi), color='red')
-axs[1, 0].set_title('Twist Angle')
-axs[1, 0].set_xlabel('Spanwise location [m]')
-axs[1, 0].set_ylabel('Twist Angle [°]')
-axs[0, 1].plot(x, np.multiply(get_stiffness()[1], load_case_1), color='lime')
-axs[0, 1].set_title('Deflection')
-axs[0, 1].set_xlabel('Spanwise location [m]')
-axs[0, 1].set_ylabel('Deflection [m]')
-axs[1, 1].plot(x, np.multiply(get_stiffness()[1], load_case_2), color='lime')
-axs[1, 1].set_title('Deflection')
-axs[1, 1].set_xlabel('Spanwise location [m]')
-axs[1, 1].set_ylabel('Deflection [m]')
+axs[0].plot(x, np.multiply(get_twist(x), 180 / math.pi), color='red')
+axs[0].set_title('Twist Angle')
+axs[0].set_xlabel('Spanwise location [m]')
+axs[0].set_ylabel('Twist Angle [°]')
+axs[1].plot(x, get_stiffness()[1], color='lime')
+axs[1].set_title('Deflection')
+axs[1].set_xlabel('Spanwise location [m]')
+axs[1].set_ylabel('Deflection [m]')
 plt.show()
-"""
+'''
+
+'''
+x = span
+buckling = get_buckling()
+plt.plot(x, buckling)
+plt.show()
+'''
