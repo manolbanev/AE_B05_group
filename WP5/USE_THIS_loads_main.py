@@ -54,7 +54,7 @@ def Prandtl(x):
 # obtain aerodynamic loads distributions
 def get_aerodynamic(x):
     c_y_func = sp.interpolate.interp1d([0, wing_length], [c_root, c_tip], kind='linear', fill_value="extrapolate")
-    file_names = ["WP5\MainWing_a=0.00_v=10.00ms.txt", "WP5\MainWing_a=10.00_v=10.00ms.txt"]
+    file_names = ["MainWing_a=0.00_v=10.00ms.txt", "MainWing_a=10.00_v=10.00ms.txt"]
     def load_file(filename): # read aerodynamic data from file
         data = []
         used_cols = [0, 1, 2, 3, 5, 7]
@@ -394,12 +394,34 @@ def get_twist(dist):
 
     return twist_values
 
+def calculate_total_shear(Vy,T,h,t,c):
+    total_shear = []
+    for i in range(50):
+        total_shear.append((0.75*Vy[i])/(h[i]*t) + (T[i])/(2*c[i]*h[i]*t))
+    return total_shear
+
+def cord_function(y):# c(y) gives the cord lenght as function of span location y
+    c_y_func = sp.interpolate.interp1d([0, wing_length], [c_root, c_tip], kind='linear', fill_value="extrapolate")
+    return c_y_func(y)
+
+def short_side_of_the_spar_function(y):#h
+    return 0.0942*cord_function(y)
+
+def calculate_critical_shear_stress(t,h):
+    E = 68.9 *10**9 #Pa
+    v = 0.33 #poisson's ratio
+    ks =  9.5 # clamped edges
+    critical_shear = []
+    for i in range(50):
+        critical_shear.append(-((math.pi**2)*ks*E*t**2)/(12*(1-v**2)*h[i]**2))
+    return critical_shear
 
 
-# # plotting loads distribution, shear, moment, torque and twist angle
+
+# plotting loads distribution, shear, moment, torque and twist angle
 # fig, axs = plt.subplots(3, 2)
 # plt.tight_layout()
-# x = span
+x = span
 # axs[0, 0].plot(x, combined_load(x), color='red')
 # axs[0, 0].set_xlabel('Spanwise location [m]')
 # axs[0, 0].set_ylabel('Load distribution [N/m]')
@@ -416,6 +438,12 @@ def get_twist(dist):
 # axs[0, 1].set_xlabel('Spanwise location [m]')
 # axs[0, 1].set_ylabel('Torque [Nm]')
 # axs[0, 1].set_title('Torque')
+
+# plt.plot(x,calculate_total_shear(get_integrated()[0],combined_torque(x),short_side_of_the_spar_function(x),0.01,cord_function(x)),color='green',label = 'total')
+# plt.plot(x,calculate_critical_shear_stress(0.01,short_side_of_the_spar_function(x)),color='red',label = 'critical')
+# plt.xlabel('span [m]')
+# plt.ylabel('Total shear stress [N/mm2]')
+# plt.legend()
 # axs[1, 1].plot(x, get_twist(x), color='pink')
 # axs[1, 1].set_xlabel('Spanwise location [m]')
 # axs[1, 1].set_ylabel('Twist Angle [rad]')
