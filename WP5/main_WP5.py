@@ -1,9 +1,5 @@
-from WP4.USE_THIS_loads_main import get_integrated
-from WP4.USE_THIS_loads_main import combined_torque
-from WP5.wing import wing1
-from WP5.wingbox import wingbox1
-from WP5.ribs import rib1
-import matplotlib.pyplot as plt
+from WP4.USE_THIS_loads_main import get_integrated, combined_torque
+from WP5.components import wing1, wingbox1, rib1
 import scipy as sp
 
 sigma_yield = 240 * 1e6
@@ -119,42 +115,6 @@ def check_skin_failure():
     print('Done checking skin failure')
 
 
-check_stringer_failure()
-check_spar_failure()
-check_compressive_failure()
-check_skin_failure()
-
-print(max(get_sigma_absolute()))
-print(max(get_shear_stress()))
-
-'''
-figs, axs = plt.subplots(5)
-plt.tight_layout()
-axs[0].plot(wing1.span, get_sigma(), color='magenta')
-axs[0].set_title('Sigma')
-axs[1].plot(wing1.span, get_stringer_buckling(), color='cyan')
-axs[1].set_title('Stringer Buckling')
-axs[2].plot(wing1.span, get_web_buckling(), color='lime')
-axs[2].set_title('Web Buckling')
-axs[3].plot(wing1.span, get_shear_stress(), color='yellow')
-axs[3].set_title('Shear Stress')
-axs[4].plot(wing1.span, get_skin_buckling_function(), color='purple')
-axs[4].set_title('Skin Buckling')
-plt.show()
-'''
-
-
-fig, ax = plt.subplots(2)
-x = wing1.span
-ax[0].plot(x, get_sigma_absolute(), color='magenta')
-ax[0].plot(x, get_stringer_buckling(), color='cyan', linestyle='dashed')
-ax[0].plot(x, get_skin_buckling_function(), color='purple', linestyle='dashed')
-ax[1].plot(x, get_shear_stress(), color='yellow')
-ax[1].plot(x, get_web_buckling(), color='lime', linestyle='dashed')
-plt.show()
-
-
-# implement (in)sanity checks here -> a/b ratio, size of the stringers, rib number vs rib thickness
 def check_stringer_height():
     for i in wing1.span:
         if wingbox1.spar_rear.get_height(i) <= 2 * wingbox1.stringer.height:
@@ -167,7 +127,7 @@ def check_stringer_width():
             return True
 
 
-def check_ribs():  # find and swap reference values for rib thickness and rib % in the wing
+def check_ribs():
     if rib1.number * 0.01 > wing1.length / 4:
         return True
 
@@ -179,6 +139,13 @@ def insanity_check():
         print('Warning, stringers too wide')
     if check_ribs():
         print('Warning, too many ribs')
+
+
+def check_failure():
+    check_stringer_failure()
+    check_spar_failure()
+    check_compressive_failure()
+    check_skin_failure()
 
 
 def get_mass():
@@ -214,27 +181,5 @@ def get_safety_margin():
 
 
 insanity_check()
+check_failure()
 get_mass()
-
-# plot safety margins here
-fig, ax = plt.subplots(3)
-x = wing1.span
-ax[0].plot(x, get_safety_margin()[0](x), color='magenta')
-ax[0].set_title('Stringer Safety Margin')
-ax[1].plot(x, get_safety_margin()[1](x), color='cyan')
-ax[1].set_title('Skin Safety Margin')
-ax[2].plot(x, get_safety_margin()[2](x), color='purple')
-ax[2].set_title('Web Safety Margin')
-
-
-ax[0].set_ylim(0, 10)
-ax[1].set_ylim(0, 10)
-ax[2].set_ylim(0, 10)
-ax[0].axhline(y=1, color='black', linestyle='dashed')
-ax[1].axhline(y=1, color='black', linestyle='dashed')
-ax[2].axhline(y=1, color='black', linestyle='dashed')
-
-
-plt.show()
-
-
