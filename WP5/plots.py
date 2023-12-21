@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
-from WP5.main_WP5 import (get_safety_margin, get_sigma_absolute, get_stringer_buckling,
-                          get_skin_buckling_function, get_shear_stress, get_web_buckling, get_sigma)
+from WP5.stress_states import (get_safety_margin, get_sigma_absolute, get_stringer_buckling,
+                               get_skin_buckling_function, get_shear_stress, get_web_buckling, get_sigma)
 from WP5.components import wing1
 
 
@@ -27,7 +27,7 @@ def plot_failures():
     figs, axs = plt.subplots(5)
     plt.tight_layout()
     axs[0].plot(wing1.span, get_sigma(), color='magenta')
-    axs[0].set_title('Sigma')
+    axs[0].set_title('Normal stress')
     axs[1].plot(wing1.span, get_stringer_buckling(), color='cyan')
     axs[1].set_title('Stringer Buckling')
     axs[2].plot(wing1.span, get_web_buckling(), color='lime')
@@ -45,6 +45,13 @@ def plot_failures_combined():
     ax[0].plot(x, get_sigma_absolute(), color='magenta')
     ax[0].plot(x, get_stringer_buckling(), color='cyan', linestyle='dashed')
     ax[0].plot(x, get_skin_buckling_function(), color='purple', linestyle='dashed')
+    ax[0].legend(['Normal stress', 'Stringer Buckling', 'Skin Buckling'])
+    ax[0].set_xlabel('Span [m]')
+    ax[0].set_ylabel('Normal stress [MPa]')
     ax[1].plot(x, get_shear_stress(), color='yellow')
     ax[1].plot(x, get_web_buckling(), color='lime', linestyle='dashed')
+    ax[1].legend(['Shear stress', 'Web Buckling'])
+    ax[1].set_xlabel('Span [m]')
+    ax[1].set_ylabel('Shear stress [MPa]')
     plt.show()
+
