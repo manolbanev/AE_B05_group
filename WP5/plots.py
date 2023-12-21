@@ -4,7 +4,7 @@ from WP5.stress_states import (get_safety_margin, get_sigma_absolute, get_string
 from WP5.components import wing1
 
 
-def plot_safety_margin():
+def plot_safety_margin():  # plots the safety margin for each stress state
     fig, ax = plt.subplots(3)
     x = wing1.span
     ax[0].plot(x, get_safety_margin()[0](x), color='magenta')
@@ -23,7 +23,7 @@ def plot_safety_margin():
     plt.show()
 
 
-def plot_failures():
+def plot_failures():  # plots the stress states for each stress state
     figs, axs = plt.subplots(5)
     plt.tight_layout()
     axs[0].plot(wing1.span, get_sigma(), color='magenta')
@@ -39,7 +39,7 @@ def plot_failures():
     plt.show()
 
 
-def plot_failures_combined():
+def plot_failures_combined():  # plots the stress states for each stress state grouping the stress states
     fig, ax = plt.subplots(2)
     x = wing1.span
     ax[0].plot(x, get_sigma_absolute(), color='magenta')

@@ -2,22 +2,22 @@ from WP4.USE_THIS_loads_main import get_integrated, combined_torque
 from WP5.components import wing1, wingbox1, rib1
 import scipy as sp
 
-sigma_yield = 240 * 1e6
+sigma_yield = 240  # MPa
 
 
-def get_shear():
+def get_shear():  # retrieves the shear force from previous work package
     return get_integrated()[0]
 
 
-def get_moment():
+def get_moment():  # retrieves the moment from previous work package
     return get_integrated()[1]
 
 
-def get_torque():
+def get_torque():  # retrieves the torque from previous work package
     return combined_torque(wing1.span)
 
 
-def get_sigma():
+def get_sigma() -> list:  # calculates the normal stress in the wingbox
     sigma_list = []
     moments = get_moment()
     a = 0
@@ -28,7 +28,7 @@ def get_sigma():
     return sigma_list
 
 
-def get_sigma_absolute():
+def get_sigma_absolute() -> list:  # converts the normal stress to absolute values
     sigma_list = []
     sigma = get_sigma()
     for i in sigma:
@@ -36,7 +36,7 @@ def get_sigma_absolute():
     return sigma_list
 
 
-def get_shear_flow():
+def get_shear_flow() -> list:  # calculates the shear flow in the wingbox
     torque = get_torque()
     shear_flow = []
     a = 0
@@ -46,7 +46,7 @@ def get_shear_flow():
     return shear_flow
 
 
-def get_shear_stress():
+def get_shear_stress() -> list:  # calculates the total shear stress in the wingbox
     tau_list = []
     shear = get_shear()
     shear_flow = get_shear_flow()
@@ -57,28 +57,28 @@ def get_shear_stress():
     return tau_list
 
 
-def get_stringer_buckling():
+def get_stringer_buckling() -> list:  # calculates the critical stress for stringer buckling
     stringer_buckling = []
     for i in wing1.span:
         stringer_buckling.append(wingbox1.stringer.get_buckling(rib1.get_distance(i)) * 1e-6)
     return stringer_buckling
 
 
-def get_web_buckling():
+def get_web_buckling() -> list:  # calculates the critical stress for web buckling
     web_buckling = []
     for i in wing1.span:
         web_buckling.append(wingbox1.spar_rear.get_buckling(i) * 1e-6)
     return web_buckling
 
 
-def get_skin_buckling_function():
+def get_skin_buckling_function() -> list:  # calculates the critical stress for skin buckling
     skin_buckling = []
     for i in wing1.span:
         skin_buckling.append(wingbox1.get_skin_buckling(i) * 1e-6)
     return skin_buckling
 
 
-def check_stringer_failure():
+def check_stringer_failure():  # checks if the stringers fail
     sigma = get_sigma_absolute()
     stringer_buckling = get_stringer_buckling()
     for i in range(len(wing1.span)):
@@ -87,7 +87,7 @@ def check_stringer_failure():
     print('Done checking stringer failure')
 
 
-def check_spar_failure():
+def check_spar_failure():  # checks if the web fails
     tau = get_shear_stress()
     web_buckling = get_web_buckling()
     for i in range(len(wing1.span)):
@@ -96,7 +96,7 @@ def check_spar_failure():
     print('Done checking web failure')
 
 
-def check_compressive_failure():
+def check_compressive_failure():  # checks if the wingbox fails in compression
     sigma = get_sigma_absolute()
     for i in range(len(wing1.span)):
         if sigma[i] > sigma_yield:
@@ -104,7 +104,7 @@ def check_compressive_failure():
     print('Done checking compressive failure')
 
 
-def check_skin_failure():
+def check_skin_failure():  # checks if the skin fails
     sigma = []
     for i in get_sigma():
         sigma.append(abs(i))
@@ -114,7 +114,7 @@ def check_skin_failure():
     print('Done checking skin failure')
 
 
-def get_safety_margin():
+def get_safety_margin() -> tuple:  # calculates the safety margin for each failure mode
     sm_stringer = []
     sm_skin = []
     sm_web = []
@@ -134,7 +134,7 @@ def get_safety_margin():
     return sm_str_func, sm_skin_func, sm_web_func
 
 
-def check_failure():
+def check_failure():  # checks for all failure modes
     check_stringer_failure()
     check_spar_failure()
     check_compressive_failure()
