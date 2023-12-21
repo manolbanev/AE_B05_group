@@ -124,7 +124,8 @@ check_spar_failure()
 check_compressive_failure()
 check_skin_failure()
 
-
+print(max(get_sigma_absolute()))
+print(max(get_shear_stress()))
 
 '''
 figs, axs = plt.subplots(5)
